@@ -1,0 +1,51 @@
+# ⬇ Python 相关 ⬇
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+.Python
+venv/
+env/
+pip-log.txt
+pip-wheel-metadata/
+poetry.lock
+
+# ⬇ 依赖文件 ⬇
+*.egg-info/
+*.egg
+dist/
+build/
+site-packages/
+
+# ⬇ IDE / 编辑器相关 ⬇
+.vscode/
+.idea/
+*.iml
+*.sublime-workspace
+
+# ⬇ 日志和调试文件 ⬇
+*.log
+*.out
+*.err
+logs/
+debug.log
+
+# ⬇ 单元测试缓存 ⬇
+.tox/
+.nox/
+.pytest_cache/
+
+# ⬇ Jupyter Notebook ⬇
+.ipynb_checkpoints/
+
+# ⬇ Docker 相关 ⬇
+docker-compose.override.yml
+.env
+.env.local
+
+# ⬇ 数据文件 ⬇
+*.sqlite3
+*.db
+__data__/
+media/
