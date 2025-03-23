@@ -45,7 +45,7 @@ deploy-job:      # This job runs in the deploy stage.
   stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
   environment: production
   script:
-    - ssh "$DEPLOY_USER@DEPLOY_SERVER" \
+    - ssh "$DEPLOY_USER@$DEPLOY_SERVER" \
         "echo $DOCKER_REGISTRY; docker pull $DOCKER_REGISTRY; docker stop modhelper-back; docker rm modhelper-back; docker run -d --name modhelper-back -p 8000:8000 $DOCKER_REGISTRY"
   only:
     - master
