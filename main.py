@@ -1,26 +1,27 @@
-import asyncio
-import datetime
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-import rag_service
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+# import routers
+from services import ask_router
 
-@app.get("/")
-def home():
-    return {"message": "WebSocket RAG Backend is Running"}
+# import config
+from config import settings
 
-@app.websocket("/ws/rag")
-async def websocket_rag(websocket: WebSocket):
-    await websocket.accept()
-    try:
-        while True:
-            query = await websocket.receive_text()
-            print(f"收到查询: {query}")
-            
-            async for chunk in rag_service.generate_response(query):
-                await websocket.send_text(chunk)
-            
-            await websocket.send_text("[DONE]")
-            
-    except WebSocketDisconnect:
-        print("WebSocket 连接断开")
+app= FastAPI()
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOW_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(
+    ask_router,prefix="/api",tags=["ask"],
+)
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

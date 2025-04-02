@@ -6,7 +6,9 @@ __pycache__/
 *.swp
 .Python
 venv/
+.venv/
 env/
+.env
 pip-log.txt
 pip-wheel-metadata/
 poetry.lock

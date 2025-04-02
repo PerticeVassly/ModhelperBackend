@@ -1,3 +1,9 @@
 fastapi
 uvicorn
 websockets
+pydantic
+pydantic-settings
+sqlalchemy
+openai
+python-dotenv
+langchain
