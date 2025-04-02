@@ -1,12 +1,10 @@
 import asyncio
+from vector_db import search_mods
 
 async def generate_response(query: str):
+    related_mods = search_mods(query)
     messages = [
-        f"查询: '{query} 处理中'",
-        "检索相关内容...",
-        "生成回答中...",
-        "少女祈祷中...",
-        f"最终回答: '{query} 的智能回答'"
+        f"相关文本: '{mod}'" for mod in related_mods
     ]
     for msg in messages:
         await asyncio.sleep(2)
