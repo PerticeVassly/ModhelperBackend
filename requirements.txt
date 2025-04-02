@@ -1,3 +1,6 @@
-fastapi
-uvicorn
-websockets
+chromadb==0.6.3
+fastapi==0.115.12
+neo4j==5.28.1
+openai==1.70.0
+pydantic==2.11.1
+sentence_transformers==3.4.1
