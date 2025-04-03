@@ -36,7 +36,7 @@ class SQLiteMetadataDB(BaseMetadataDB):
             cursor = self.conn.cursor()    
             self.conn.execute(
                 "INSERT INTO mod_info (name, tags, description, support_platform, download_url) VALUES (?, ?, ?, ?, ?)",
-                (mod.name, ",".join(mod.tags), mod.description, mod.support_platform, mod.download_url)
+                (mod.name, ",".join(mod.tags), mod.description, mod.support_platform.value, mod.download_url)
             )
             self.conn.commit()
             logger.info(f"Added mod {mod.name} successfully.")
