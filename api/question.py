@@ -21,6 +21,8 @@ def mock_retrieve_context(keywords, topic_name):
         }
     ]
 
+# TODO: user service instead of direct llm call
+
 @router.post("/question")
 async def handle_ask(questionRequest: QuestionRequest):
     # todo() identify which game the user want to ask
