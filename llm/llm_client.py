@@ -46,7 +46,7 @@ class LLMClient():
         self.messages.append({"role": "assistant", "content": response_content})
 
         # log the interaction
-        logger.debug(f"LLM interaction: {prompt} \n->\n {response_content}\n")
+        logger.debug(f"LLM interaction:\n{prompt}\n--------->\n{response_content}\n")
 
         # TODO: how to handle the stream response ?
         if self.stream:

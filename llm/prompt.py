@@ -2,6 +2,7 @@ from abc import ABC
 from abc import ABC, abstractmethod
 from typing import List
 import logging
+import textwrap
 
 logger = logging.getLogger("prompt")
 
@@ -22,7 +23,7 @@ class Prompt(ABC):
 class ExtractorPrompt(Prompt):
 
     def __init__(self):
-        template = """
+        template = textwrap.dedent("""
             你是一名专业的 {topic_name} 解析助手，擅长从文本中提取关键信息。
             请从所给的文本中提取以下信息：
 
@@ -35,7 +36,7 @@ class ExtractorPrompt(Prompt):
 
             **文本：**
             {input_text}
-        """
+        """)
         super().__init__(template)
 
     def render(self, key_words: List[str], topic_name : str, input_text : str) -> str:
@@ -52,12 +53,12 @@ class ExtractorPrompt(Prompt):
 
 class RetryPrompt(Prompt):
     def __init__(self):
-        template = """
+        template = textwrap.dedent("""
             你的回答格式不正确，请严格按照以下格式例子返回结果：
             {{
             {json_format}
             }}
-        """
+        """)
         super().__init__(template)
 
     def render(self, key_words: List[str]) -> str:
@@ -68,13 +69,13 @@ class RetryPrompt(Prompt):
       
 class RAGPrompt(Prompt):
     def __init__(self):
-        template = """
+        template = textwrap.dedent("""
             你是一名专业的 {topic_name} 助手.
             我们将给你一些 {topic_name} 相关参考资料，请你根据这些信息回答问题。
             参考资料：
             {context}
             问题：{question}
-        """
+        """)
         super().__init__(template)
 
     def render(self, context_content: str, question: str, topic_name : str) -> str:

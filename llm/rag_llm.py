@@ -26,6 +26,6 @@ class RAGLLM():
         topic_name: str = "MineCraft Mod"
     ) -> str:
         formatted_context = self.__format_context(context or self.context)
-        prompt = self.prompt.format(context=formatted_context, question=question, topic_name=topic_name)
+        prompt = self.prompt.render(context_content=formatted_context, question=question, topic_name=topic_name)
         response = self.llm_client.generate_response(prompt)
         return response

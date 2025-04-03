@@ -23,7 +23,7 @@ class ExtractorLLM():
             input_text=input_text
         )
         response = self.llm_client.generate_response(prompt)
-        checked_response = self.check_response_format(response)
+        checked_response = self.check_response_format(response, key_words)
         return json.loads(checked_response)
     
     def check_response_format(self, response: str, key_words : list[str]) -> dict:
