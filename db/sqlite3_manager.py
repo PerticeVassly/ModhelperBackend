@@ -47,7 +47,7 @@ class SQLiteMetadataDB(BaseMetadataDB):
     
     def get(self, name: str) -> Optional[ModMetadata]:
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM mods WHERE name = ?", (name,))
+        cursor.execute("SELECT * FROM mod_info WHERE name = ?", (name,))
         if row := cursor.fetchone():
             return ModMetadata(
                 name=row[1],
