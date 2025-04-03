@@ -3,16 +3,27 @@ from pydantic import BaseModel
 from openai import OpenAI
 from config import settings
 
+from model.ask_request import AskRequest
+
 router = APIRouter()
 
-# 定义请求体模型
-class AskRequest(BaseModel):
-    ask: str
-
-# 定义 API 端点
 @router.post("/ask")
 async def handle_ask(ask_request: AskRequest):
-    # use langchain to process the ask_request
+
+    # todo()
+
+    # process the request get the keywords
+
+    # retrieve the related context from the database with the keywords
+
+    # fetch the chating history from the database
+
+    # compose the prompt with the context history and the question
+
+    # interact with the LLM 
+
+    # save and return the response 
+
     client = OpenAI(
         api_key=settings.LLM_API_KEY,
         base_url=settings.LLM_BASE_URL,

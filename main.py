@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # import routers
-from services import ask_router
+from api import ask_router
 
 # import config
 from config import settings

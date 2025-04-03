@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # LLM settings
     LLM_API_KEY: str = Field(
-        default="", 
+        default=None, 
         env="LLM_API_KEY")
     LLM_MODEL_NAME: str = Field(
         default="deepseek-chat", 
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
         env="LLM_MAX_TOKENS")
 
     class Config:
-        env_file = ".env"  # 自动加载根目录下的 .env 文件
+        env_file = ".env"  # load .env in the root directory
         env_file_encoding = "utf-8"
 
 settings = Settings()
