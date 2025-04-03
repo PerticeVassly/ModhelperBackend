@@ -7,6 +7,12 @@ from typing import Optional
 from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
+import logging
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+logging.getLogger("llm").setLevel(logging.DEBUG)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "data")
@@ -16,7 +22,6 @@ class Settings(BaseSettings):
     # 应用配置
     PROJECT_NAME: str = "ModHelper-Backend"
     API_VERSION: str = "v1"
-    DEBUG: bool = True
     
     # FastAPI 配置
     HOST: str = "0.0.0.0"

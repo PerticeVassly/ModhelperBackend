@@ -1,6 +1,9 @@
 
 from .question_request import QuestionRequest
 
-__all__ = [
-    "QuestionRequest",
+from .keywords import MinecraftModKeywords
+
+all = [
+    QuestionRequest,
+    MinecraftModKeywords
 ]

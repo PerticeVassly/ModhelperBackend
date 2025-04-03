@@ -4,29 +4,33 @@ from llm import LLMClient, ExtractorLLM, LLMClient, RAGLLM
 
 # models
 from model import QuestionRequest
+from model import MinecraftModKeywords
 
 from test.mock import mock_retrieve_context
+
 router = APIRouter()
 
-@router.post("/ask")
+@router.post("/question")
 async def handle_ask(questionRequest: QuestionRequest):
+    # todo() identify which game the user want to ask
+    topic_name = "Minecraft Mod"
+
     # extract keywords from the question
+    keywords = MinecraftModKeywords;
     extractor = ExtractorLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
-    keywords = extractor.extract(questionRequest.question)
+    keypoints = extractor.extract(questionRequest.question, keywords, topic_name)
+
     # retrieve context from database
-    context = mock_retrieve_context(keywords)
+    context = mock_retrieve_context(keypoints, topic_name)
 
     # use LLM to generate response
     rag = RAGLLM(
-        llm_client = LLMClient(
-            api_key=settings.LLM_API_KEY,
-        ),
-        context=context
-    )
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
     response = rag.generate_response(
         question=questionRequest.question,
-        context=context
+        context=context,
+        topic_name=topic_name
     )
 
     # return the response

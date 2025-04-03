@@ -1,0 +1,87 @@
+from abc import ABC
+from abc import ABC, abstractmethod
+from typing import List
+import logging
+
+logger = logging.getLogger("prompt")
+
+class Prompt(ABC):
+    """
+    Basic class for all prompts.
+
+    Contaings a template and method of how to render it.
+    """
+
+    def __init__(self, template: str):
+        self.template = template
+
+    @abstractmethod
+    def render(self, kwargs : list[str]) -> str:
+        pass
+
+class ExtractorPrompt(Prompt):
+
+    def __init__(self):
+        template = """
+            你是一名专业的 {topic_name} 解析助手，擅长从文本中提取关键信息。
+            请从所给的文本中提取以下信息：
+
+            {extraction_fields}
+
+            请严格使用 JSON 格式返回结果，不要有额外输出，格式如下例：
+            {{
+            {json_format}
+            }}
+
+            **文本：**
+            {input_text}
+        """
+        super().__init__(template)
+
+    def render(self, key_words: List[str], topic_name : str, input_text : str) -> str:
+        extraction_fields = "\n".join(f"- **{kw}**（如果有多个，请全部列出）" for kw in key_words)
+        json_format = ",\n".join(f'"{kw}": []' for kw in key_words)
+        ans = self.template.format(
+            topic_name=topic_name,
+            extraction_fields=extraction_fields,
+            json_format=json_format,
+            input_text=input_text
+        )
+        logger.debug(f"Prompt formated: {ans}")
+        return ans
+
+class RetryPrompt(Prompt):
+    def __init__(self):
+        template = """
+            你的回答格式不正确，请严格按照以下格式例子返回结果：
+            {{
+            {json_format}
+            }}
+        """
+        super().__init__(template)
+
+    def render(self, key_words: List[str]) -> str:
+        json_format = ",\n".join(f'"{kw}": []' for kw in key_words)
+        ans = self.template.format(json_format=json_format)
+        logger.debug(f"Prompt formated: {ans}")
+        return ans
+      
+class RAGPrompt(Prompt):
+    def __init__(self):
+        template = """
+            你是一名专业的 {topic_name} 助手.
+            我们将给你一些 {topic_name} 相关参考资料，请你根据这些信息回答问题。
+            参考资料：
+            {context}
+            问题：{question}
+        """
+        super().__init__(template)
+
+    def render(self, context_content: str, question: str, topic_name : str) -> str:
+        ans = self.template.format(
+            topic_name=topic_name,
+            context=context_content,
+            question=question
+        )
+        logger.debug(f"Prompt formated: {ans}")
+        return ans
