@@ -3,6 +3,10 @@ from pydantic import Field, validator, BaseSettings
 from typing import List, Optional
 import json
 from pathlib import Path
+from typing import Optional
+from pathlib import Path
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "data")
@@ -35,7 +39,7 @@ class Settings(BaseSettings):
     LLM_MODEL: str = "deepseek-chat"
     
     # 安全配置
-    SECRET_KEY: str = Field(default="change-me-in-prod", min_length=32)
+    SECRET_KEY: str = Field(default="change-me-in-prod")
     API_KEY: Optional[str] = None
 
     # CORS settings
@@ -65,12 +69,12 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
 
-    @validator("*", pre=True)
-    def create_dirs(cls, v, field):
-        if field.name.endswith(("DIR", "PATH")):
+    @field_validator("*", mode="before")
+    def create_dirs(cls, v, info):
+        if info.field_name.endswith(("DIR", "PATH")):
             path = Path(v)
             if not path.exists():
-                if field.name in ("UPLOAD_DIR", "DATA_DIR"):
+                if info.field_name in ("UPLOAD_DIR", "DATA_DIR"):
                     path.mkdir(parents=True, exist_ok=True)
             return str(path.absolute())
         return v

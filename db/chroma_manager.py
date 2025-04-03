@@ -1,17 +1,17 @@
 import chromadb
 import logging
 from typing import List, Dict, Any
-from base import BaseVectorDB
-from sentence_transformers import SentenceTransformer
+from .base import BaseVectorDB
+# from sentence_transformers import SentenceTransformer
 from config import settings
 from pathlib import Path
 
 logger = logging.getLogger("database")
 
-class ChormaVectorDB(BaseVectorDB):
+class ChromaVectorDB(BaseVectorDB):
     def __init__(self):
-        dp_path = Path(settings.CHROMA_DB_PATH)
-        dp_path.mkdir(parents=True, exist_ok=True)
+        db_path = Path(settings.CHROMA_DB_PATH)
+        db_path.mkdir(parents=True, exist_ok=True)
         
         self.client = chromadb.PersistentClient(path=str(db_path))
         self.collection = self.client.get_or_create_collection(
