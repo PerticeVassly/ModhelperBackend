@@ -1,4 +1,4 @@
-from .llm import LLMClient, LLMExtractor, LLMRAG
+from .llm import LLMClient, ExtractorLLM, RAGLLM
 
 __all__ = [
     "LLMClient",

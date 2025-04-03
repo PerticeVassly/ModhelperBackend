@@ -1,5 +1,5 @@
 import os
-from pydantic import Field, validator, BaseSettings
+from pydantic import Field, validator
 from typing import List, Optional
 import json
 from pathlib import Path
@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     # 应用配置
     PROJECT_NAME: str = "ModHelper-Backend"
     API_VERSION: str = "v1"
+    DEBUG: bool = True
     
     # FastAPI 配置
     HOST: str = "0.0.0.0"

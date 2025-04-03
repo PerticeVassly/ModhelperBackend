@@ -1,3 +1,6 @@
-from .ask_request import AskRequest
 
-__all__ = ["AskRequest"]
+from .question_request import QuestionRequest
+
+__all__ = [
+    "QuestionRequest",
+]
