@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
+    # Embedding 配置
+    EMBEDDING_URL: str = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/embeddings/embedding-v1"
+    EMBEDDING_API_KEY: Optional[str] = None
+    
     # 向量数据库
     CHROMA_DB_PATH: str = os.path.join(DATA_DIR, "chromadb_store")
     CHROMA_COLLECTION: str = "mod_docs"
@@ -41,7 +45,7 @@ class Settings(BaseSettings):
     NEO4J_PASSWORD: str = "password"
     
     # 模型配置
-    EMBEDDING_MODEL: str = "BAAI/bge-small-zh"
+    EMBEDDING_MODEL: str = "BAII/bge-small-zh"
     LLM_MODEL: str = "deepseek-chat"
     
     # 安全配置

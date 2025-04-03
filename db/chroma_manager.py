@@ -2,9 +2,10 @@ import chromadb
 import logging
 from typing import List, Dict, Any
 from .base import BaseVectorDB
-# from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer
 from config import settings
 from pathlib import Path
+from .embedding import gen_embedding
 
 logger = logging.getLogger("database")
 
@@ -20,7 +21,9 @@ class ChromaVectorDB(BaseVectorDB):
         
         logger.info(f"Initialized ChromaDB at {db_path}, collection: {settings.CHROMA_COLLECTION}")
     
-    def add(self, name: str, text: str, embedding: List[float]) -> bool:
+    def add(self, name: str, text: str) -> bool:
+        text = f"{name}: {text}"
+        embedding = gen_embedding(text)
         try:
             self.collection.add(
                 ids=[name],
@@ -33,7 +36,8 @@ class ChromaVectorDB(BaseVectorDB):
             logger.error(f"Error adding document {name}: {e}")
             return False
         
-    def search(self, query_embedding: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+        query_embedding = gen_embedding(query)
         results = self.collection.query(
             query_embeddings=[query_embedding],
             n_results=top_k
