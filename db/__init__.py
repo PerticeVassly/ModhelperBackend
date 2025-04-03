@@ -17,6 +17,7 @@ __all__ = [
     "vectorDB",
     "graphDB",
     "ModMetadata",
+    "ModPlatform",
     "ModRelation",
     "ModRelationType"
 ]

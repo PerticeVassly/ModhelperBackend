@@ -5,7 +5,7 @@ from .base import BaseVectorDB
 from sentence_transformers import SentenceTransformer
 from config import settings
 from pathlib import Path
-from .embedding import gen_embedding
+from .embedding import gen_embedding, split_text
 
 logger = logging.getLogger("database")
 
@@ -22,19 +22,29 @@ class ChromaVectorDB(BaseVectorDB):
         logger.info(f"Initialized ChromaDB at {db_path}, collection: {settings.CHROMA_COLLECTION}")
     
     def add(self, name: str, text: str) -> bool:
-        text = f"{name}: {text}"
-        embedding = gen_embedding(text)
-        try:
-            self.collection.add(
-                ids=[name],
-                documents=[text],
-                embeddings=[embedding],
-            )
-            logger.info(f"Document {name} added successfully.")
-            return True
-        except Exception as e:
-            logger.error(f"Error adding document {name}: {e}")
-            return False
+        chunks = split_text(text)
+        embeddings = []
+        metadatas = []
+        
+        for i, chunk in enumerate(chunks):
+            embedding = gen_embedding(f"{name}: {chunk}")
+            if embedding is not None:
+                embeddings.append(embedding)
+                metadatas.append({"chunk_id": i, "name": name})
+        
+        if embeddings:
+            try:
+                self.collection.add(
+                    ids=[f"{name}_{i}" for i in range(len(embeddings))],
+                    documents=chunks,
+                    embeddings=embeddings,
+                    metadatas=metadatas
+                )
+                logger.info(f"Document {name} added successfully.")
+                return True
+            except Exception as e:
+                logger.error(f"Error adding document {name}: {e}")
+                return False
         
     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         query_embedding = gen_embedding(query)

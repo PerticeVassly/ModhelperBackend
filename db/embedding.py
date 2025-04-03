@@ -19,16 +19,36 @@ def gen_embedding(input: str) -> List[float]:
         'Authorization': f'Bearer {settings.EMBEDDING_API_KEY}'
     }
     
-    response = requests.request("POST", url, headers=headers, data=payload.encode("utf-8"))
+    try:
+        response = requests.request("POST", url, headers=headers, data=payload.encode("utf-8"))
+        response.raise_for_status()
+        data = response.json()    
+        
+        if "error_code" in data:
+            raise ValueError(f"Embedding API Error: {data['error_msg']} (code: {data['error_code']})")
+        return data['data'][0]['embedding']
     
-    if response.status_code != 200:
-        logger.error(f"Embedding response error, status_code: [{response.status_code}]")
-        # todo: should raise an exception ;(
+    except Exception as e:
+        logger.error(f"Failed to generate embedding: {e}")
         return []
+
+def split_text(text: str, max_length: int = 320) -> List[str]:
+    words = text.strip().split()
+    chunks = []
+    current_chunk = []
+    current_length = 0
     
-    data = response.json()['data']
+    for word in words:
+        if current_length + len(word) + 1 <= max_length:
+            current_chunk.append(word)
+            current_length += len(word) + 1
+        else:
+            chunks.append(" ".join(current_chunk))
+            current_chunk = [word]
+            current_length = len(word)
     
-    embedding = data[0]['embedding']
-    
-    return embedding
-    
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    return chunks
+   
