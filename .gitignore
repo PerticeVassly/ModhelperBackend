@@ -49,3 +49,4 @@ docker-compose.override.yml
 *.db
 __data__/
 media/
+data/
