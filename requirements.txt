@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 fastapi
 uvicorn
 websockets
@@ -7,3 +8,11 @@ sqlalchemy
 openai
 python-dotenv
 langchain
+=======
+chromadb==0.6.3
+fastapi==0.115.12
+neo4j==5.28.1
+openai==1.70.0
+pydantic==2.11.1
+sentence_transformers==3.4.1
+>>>>>>> 0f1976d7b7d914e2b13acc6412355515b59ba624
