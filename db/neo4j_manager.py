@@ -101,3 +101,6 @@ class Neo4jGraphDB(BaseGraphDB):
         except Exception as e:
             logger.error(f"Failed to check conflict: {e}")
             return False
+
+
+graphDB = Neo4jGraphDB()

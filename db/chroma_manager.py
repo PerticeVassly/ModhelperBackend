@@ -50,3 +50,5 @@ class ChromaVectorDB(BaseVectorDB):
     def __del__(self):
         logger.info("ChromaVectorDB instance deleted.")
     
+
+vectorDB = ChromaVectorDB()

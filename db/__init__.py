@@ -1,20 +1,21 @@
 from .base import (
     ModMetadata,
+    ModPlatform,
     ModRelation,
     ModRelationType,
     BaseMetadataDB,
     BaseVectorDB,
     BaseGraphDB
 )
-from .sqlite3_manager import SQLiteMetadataDB
-from .chroma_manager import ChromaVectorDB
-from .neo4j_manager import Neo4jGraphDB
+from .sqlite3_manager import relationDB
+from .chroma_manager import vectorDB
+from .neo4j_manager import graphDB
 from config.logging_config import setup_logging
 
 __all__ = [
-    "SQLiteMetadataDB",
-    "ChromaVectorDB",
-    "Neo4jGraphDB",
+    "relationDB",
+    "vectorDB",
+    "graphDB",
     "ModMetadata",
     "ModRelation",
     "ModRelationType"
