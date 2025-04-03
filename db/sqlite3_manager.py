@@ -77,3 +77,6 @@ class SQLiteMetadataDB(BaseMetadataDB):
     def __del__(self):
         self.conn.close()
         logger.info("SQLite connection closed.")
+
+
+relationDB = SQLiteMetadataDB()
