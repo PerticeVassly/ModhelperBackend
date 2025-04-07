@@ -68,7 +68,7 @@ class RAGPrompt(Prompt):
     def __init__(self):
         template = textwrap.dedent("""
             你是一名专业的 {topic_name} 助手.
-            我们将给你一些 {topic_name} 相关参考资料，请你根据这些信息回答问题。
+            我们将给你一些 {topic_name} 相关参考资料，请你根据这些信息回答问题，但是你不能直接引用这些信息，也不能在回答中透露出你是从这些信息中获取的答案。
             参考资料：
             {context}
             问题：{question}
@@ -79,6 +79,19 @@ class RAGPrompt(Prompt):
         ans = self.template.format(
             topic_name=topic_name,
             context=context_content,
+            question=question
+        )
+        return ans
+
+class NonRAGPrompt(Prompt):
+    def __init__(self):
+        template = textwrap.dedent("""
+            {question}
+        """)
+        super().__init__(template)
+
+    def render(self, question) -> str:
+        ans = self.template.format(
             question=question
         )
         return ans

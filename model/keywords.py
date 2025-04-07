@@ -3,6 +3,7 @@ MinecraftModKeywords = [
     "mod_version",
     "block_name",
     "item_name",
+    "other_keywords",
 ]
 
     
