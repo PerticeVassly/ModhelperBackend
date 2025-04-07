@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     
     # 图数据库
     NEO4J_URI: str = Field(default="neo4j://localhost:7687", env="NEO4J_URI")
-    NEO4J_USER: str = FileNotFoundError(default="neo4j", env="NEO4J_USER")
+    NEO4J_USER: str = Field(default="neo4j", env="NEO4J_USER")
     NEO4J_PASSWORD: str = Field(..., env="NEO4J_PASSWORD")
     
     # CORS 配置
