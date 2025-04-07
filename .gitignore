@@ -6,7 +6,6 @@ __pycache__/
 *.swp
 .Python
 venv/
-.venv/
 env/
 .env
 pip-log.txt

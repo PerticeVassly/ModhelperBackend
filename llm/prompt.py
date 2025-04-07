@@ -12,7 +12,6 @@ class Prompt(ABC):
 
     Contaings a template and method of how to render it.
     """
-
     def __init__(self, template: str):
         self.template = template
 
@@ -48,7 +47,6 @@ class ExtractorPrompt(Prompt):
             json_format=json_format,
             input_text=input_text
         )
-        logger.debug(f"Prompt formated: {ans}")
         return ans
 
 class RetryPrompt(Prompt):
@@ -64,7 +62,6 @@ class RetryPrompt(Prompt):
     def render(self, key_words: List[str]) -> str:
         json_format = ",\n".join(f'"{kw}": []' for kw in key_words)
         ans = self.template.format(json_format=json_format)
-        logger.debug(f"Prompt formated: {ans}")
         return ans
       
 class RAGPrompt(Prompt):
@@ -84,5 +81,4 @@ class RAGPrompt(Prompt):
             context=context_content,
             question=question
         )
-        logger.debug(f"Prompt formated: {ans}")
         return ans

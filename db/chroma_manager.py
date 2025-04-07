@@ -2,7 +2,6 @@ import chromadb
 import logging
 from typing import List, Dict, Any
 from .base import BaseVectorDB
-from sentence_transformers import SentenceTransformer
 from config import settings
 from pathlib import Path
 from .embedding import gen_embedding, split_text

@@ -1,6 +1,6 @@
 from neo4j import GraphDatabase
 from typing import List
-from .base import BaseGraphDB, ModRelation, ModRelationType
+from .base import BaseGraphDB, ModRelation
 from config import settings
 import logging
 

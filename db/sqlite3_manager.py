@@ -1,7 +1,6 @@
 import sqlite3
-import json
 import logging
-from typing import List, Optional
+from typing import Optional
 from .base import BaseMetadataDB, ModMetadata
 from config import settings
 from pathlib import Path

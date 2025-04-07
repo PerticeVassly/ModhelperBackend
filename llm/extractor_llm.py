@@ -1,7 +1,9 @@
 import json
 from .llm_client import LLMClient
-from config import settings
-from .prompt import ExtractorPrompt, RAGPrompt, RetryPrompt
+from .prompt import ExtractorPrompt, RetryPrompt
+import logging
+
+logger = logging.getLogger("llm")
 
 class ExtractorLLM():
     """
@@ -35,8 +37,7 @@ class ExtractorLLM():
                 if isinstance(response_loaded, dict) and all(key in response_loaded for key in key_words):
                     return response
             except json.JSONDecodeError:
-                if (settings.DEBUG):
-                    print("Response format is incorrect, retrying...")
+                pass
             prompt = self.retry_prompt.render(key_words=key_words)
             response = self.llm_client.generate_response(prompt)
-        raise ValueError("LLM can't generate the formated response. Please check whether the LLM you choose is not stable or your prompt is not clear enough")
+        logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")

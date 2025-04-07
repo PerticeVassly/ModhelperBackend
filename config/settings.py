@@ -1,18 +1,8 @@
 import os
-from pydantic import Field, validator
-from typing import List, Optional
-import json
-from pathlib import Path
-from typing import Optional
+from typing import List
 from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
-import logging
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-logging.getLogger("llm").setLevel(logging.DEBUG)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "data")
@@ -24,56 +14,38 @@ class Settings(BaseSettings):
     API_VERSION: str = "v1"
     
     # FastAPI 配置
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    HOST: str = Field(default="0.0.0.0", env="HOST")
+    PORT: int = Field(default=8000, env="PORT")
     
     # Embedding 配置
-    EMBEDDING_URL: str = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/embeddings/embedding-v1"
-    EMBEDDING_API_KEY: Optional[str] = None
+    EMBEDDING_URL: str = Field(default="https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/embeddings/embedding-v1", env="EMBEDDING_URL")
+    EMBEDDING_API_KEY: str = Field(..., env="EMBEDDING_API_KEY")
     
     # 向量数据库
     CHROMA_DB_PATH: str = os.path.join(DATA_DIR, "chromadb_store")
     CHROMA_COLLECTION: str = "mod_docs"
     
     # 关系数据库
-    SQLITE_DB_PATH: str = os.path.join(DATA_DIR, "mod_metadata.db")
-    SQLITE_DB_URL: str = f"sqlite:///{SQLITE_DB_PATH}"
+    SQLITE_DB_PATH: str = Field(default=os.path.join(DATA_DIR, "mod_metadata.db"), env="SQLITE_DB_PATH")
+    SQLITE_DB_URL: str = Field(default=f"sqlite:///{SQLITE_DB_PATH}", env="SQLITE_DB_URL")
     
     # 图数据库
-    NEO4J_URI: str = "bolt://localhost:7687"
-    NEO4J_USER: str = "neo4j"
-    NEO4J_PASSWORD: str = "password"
+    NEO4J_URI: str = Field(default="neo4j://localhost:7687", env="NEO4J_URI")
+    NEO4J_USER: str = FileNotFoundError(default="neo4j", env="NEO4J_USER")
+    NEO4J_PASSWORD: str = Field(..., env="NEO4J_PASSWORD")
     
-    # 模型配置
-    EMBEDDING_MODEL: str = "BAII/bge-small-zh"
-    LLM_MODEL: str = "deepseek-chat"
-    
-    # 安全配置
-    SECRET_KEY: str = Field(default="change-me-in-prod")
-    API_KEY: Optional[str] = None
+    # CORS 配置
+    ALLOW_ORIGINS: List[str] = Field(default=["localhost:5173"], env="ALLOW_ORIGINS")  # Frontend URL
+    ALLOW_HEADERS: List[str] = Field(default=["*"], env="ALLOW_HEADERS")
+    ALLOW_METHODS: List[str] = Field(default=["*"], env="ALLOW_METHODS")
+    ALLOW_CREDENTIALS: bool = Field(default=True, env="ALLOW_CREDENTIALS")
 
-    # CORS settings
-    ALLOW_ORIGINS: List[str] = Field(default=["localhost:5173"])  # Frontend URL
-    ALLOW_HEADERS: List[str] = Field(default=["*"])
-    ALLOW_METHODS: List[str] = Field(default=["*"])
-    ALLOW_CREDENTIALS: bool = Field(default=True)
-
-    # LLM settings
-    LLM_API_KEY: str = Field(
-        default=None, 
-        env="LLM_API_KEY")
-    LLM_MODEL_NAME: str = Field(
-        default="deepseek-chat", 
-        env="LLM_MODEL_NAME")  
-    LLM_BASE_URL: str = Field(
-        default = "https://api.deepseek.com",
-        env="LLM_BASE_URL") 
-    LLM_TEMPERATURE: float = Field(
-        default=0.7, 
-        env="LLM_TEMPERATURE")
-    LLM_MAX_TOKENS: int = Field(
-        default=1000, 
-        env="LLM_MAX_TOKENS")
+    # LLM 配置
+    LLM_API_KEY: str = Field(..., env="LLM_API_KEY")
+    LLM_MODEL_NAME: str = Field(default="deepseek-chat", env="LLM_MODEL_NAME")  
+    LLM_BASE_URL: str = Field(default = "https://api.deepseek.com",env="LLM_BASE_URL") 
+    LLM_TEMPERATURE: float = Field(default=0.7, env="LLM_TEMPERATURE")
+    LLM_MAX_TOKENS: int = Field(default=1000, env="LLM_MAX_TOKENS")
 
     class Config:
         env_file = ".env"
