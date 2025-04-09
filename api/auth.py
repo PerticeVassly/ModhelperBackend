@@ -1,6 +1,6 @@
-from fastapi import APIRouter
 from model import UserRegister, UserLogin
 from service import handle_register, handle_login
+from fastapi import APIRouter
 
 router = APIRouter()
 

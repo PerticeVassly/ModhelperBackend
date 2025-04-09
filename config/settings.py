@@ -35,8 +35,7 @@ class Settings(BaseSettings):
     NEO4J_PASSWORD: str = Field(..., env="NEO4J_PASSWORD")
 
     # MongoDB
-    MONGO_URI: str = Field(default="mongodb://localhost:27017", env="MONGO_URI")
-    MONGO_DB: str = Field(default="modhelper", env="MONGO_DB")
+    MONGO_URL: str = Field(default="mongodb://localhost:27017", env="MONGO_URL")
     
     # CORS 配置
     ALLOW_ORIGINS: List[str] = Field(default=["localhost:5173"], env="ALLOW_ORIGINS")  # Frontend URL
@@ -50,6 +49,11 @@ class Settings(BaseSettings):
     LLM_BASE_URL: str = Field(default = "https://api.deepseek.com",env="LLM_BASE_URL") 
     LLM_TEMPERATURE: float = Field(default=0.7, env="LLM_TEMPERATURE")
     LLM_MAX_TOKENS: int = Field(default=1000, env="LLM_MAX_TOKENS")
+
+    # JWT 配置
+    JWT_SECRET_KEY = Field(default="JWT_KEY", env="JWT_SECRET_KEY")
+    JWT_ALGORITHM = Field(default="HS256", env="JWT_ALGORITHM")
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES = Field(default="3600", env ="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
 
     class Config:
         env_file = ".env"

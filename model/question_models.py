@@ -1,10 +1,13 @@
 from pydantic import BaseModel
-from pydantic import Field
 
 class QuestionRequest(BaseModel):
+    conversation_id: str
+    question: str
 
-    question: str = Field(
-        default=None,
-        title="question",
-        description="question the user input",
-    )
+class ConversationCreate(BaseModel):
+    title: str
+
+class ChatMessage(BaseModel):
+    conversation_id: str
+    user_message: str
+    assistant_message: str

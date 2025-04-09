@@ -1,3 +1,7 @@
-from .question import router as ask_router
+from .auth import router as auth_router
+from .question import router as question_router
 
-__all__ = ["ask_router"]
+__all__ = [
+    "auth_router",
+    "question_router",
+]

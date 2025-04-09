@@ -3,7 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # import routers
-from api import ask_router
+from api import auth_router
+from api import question_router
 
 # import config
 from config import settings, setup_logging
@@ -19,11 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(
-    ask_router,prefix="/api",tags=["question"],
-)
+app.include_router(auth_router, prefix="/api")
+app.include_router(question_router, prefix="/api")
 
 setup_logging()
+
+for route in app.routes:
+    print(f"{route.path} -> {route.methods}")
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True)
