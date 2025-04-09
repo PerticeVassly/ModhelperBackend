@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(
-    ask_router,prefix="/api",tags=["ask"],
+    ask_router,prefix="/api",tags=["question"],
 )
 
 setup_logging()

@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     NEO4J_URI: str = Field(default="neo4j://localhost:7687", env="NEO4J_URI")
     NEO4J_USER: str = Field(default="neo4j", env="NEO4J_USER")
     NEO4J_PASSWORD: str = Field(..., env="NEO4J_PASSWORD")
+
+    # MongoDB
+    MONGO_URI: str = Field(default="mongodb://localhost:27017", env="MONGO_URI")
+    MONGO_DB: str = Field(default="modhelper", env="MONGO_DB")
     
     # CORS 配置
     ALLOW_ORIGINS: List[str] = Field(default=["localhost:5173"], env="ALLOW_ORIGINS")  # Frontend URL

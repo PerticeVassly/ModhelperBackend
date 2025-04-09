@@ -1,9 +1,15 @@
 
-from .question_request import QuestionRequest
+from .question_models import QuestionRequest
 
 from .keywords import MinecraftModKeywords
 
+from .auth_models import UserRegister, UserLogin, ConversationCreate, ChatMessage
+
 all = [
     QuestionRequest,
-    MinecraftModKeywords
+    MinecraftModKeywords,
+    UserRegister,
+    UserLogin,
+    ConversationCreate,
+    ChatMessage
 ]
