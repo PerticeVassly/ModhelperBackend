@@ -25,9 +25,5 @@ app.include_router(question_router, prefix="/api")
 
 setup_logging()
 
-for route in app.routes:
-    print(f"{route.path} -> {route.methods}")
-
-
 if __name__ == "__main__":
     uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True)

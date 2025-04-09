@@ -3,9 +3,11 @@ from config import settings
 from model import UserInfo, ConversationInfo, MessageInfo
 from bson import ObjectId
 import logging
+from pymongo.results import InsertOneResult
 
 
 client = MongoClient(settings.MONGO_URL, serverSelectionTimeoutMS=3000)
+client.admin.command('ping')
 db = client["modhelper"]
 
 logger = logging.getLogger("database")
@@ -28,7 +30,10 @@ class UsersCollection:
     
     def insert_one(self, user: UserInfo) -> bool:
         try:
-            self.collection.insert_one(user.model_dump())
+            # replace id into _id
+            tmp = user.model_dump()
+            tmp.pop("id")
+            self.collection.insert_one(tmp)
             return True
         except Exception as e:
             logger.error(f"Error inserting user: {e}")
@@ -43,26 +48,33 @@ class ConversationsCollection:
         if conversation:
             return ConversationInfo(**conversation)
         return None
+
+    def find_all_by_user_id(self, user_id: ObjectId) -> list[ConversationInfo]:
+        conversations = self.collection.find({"user_id": user_id})
+        return [ConversationInfo(**conversation) for conversation in conversations]
     
-    def insert_one(self, conversation: ConversationInfo) -> bool:
+    def insert_one(self, conversation: ConversationInfo) -> InsertOneResult:
         try:
-            self.collection.insert_one(conversation.model_dump())
-            return True
+            tmp = conversation.model_dump()
+            tmp.pop("id")
+            return self.collection.insert_one(tmp)
         except Exception as e:
             logger.error(f"Error inserting conversation: {e}")
-            return False
+            return None
 
 class MessagesCollection:
     def __init__(self):
         self.collection = db["messages"]
     
     def find_all_by_conversation_id(self, conversation_id: ObjectId) -> list[MessageInfo]:
-        messages = self.collection.find({"conversation_id": conversation_id})
+        messages = self.collection.find({"conversation_id": conversation_id}).sort([("timestamp", 1)])
         return [MessageInfo(**message) for message in messages]
 
     def insert_one(self, message: MessageInfo) -> bool:
         try:
-            self.collection.insert_one(message.model_dump())
+            tmp = message.model_dump()
+            tmp.pop("id")
+            self.collection.insert_one(tmp)
             return True
         except Exception as e:
             logger.error(f"Error inserting message: {e}")

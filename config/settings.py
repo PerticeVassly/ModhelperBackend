@@ -51,9 +51,9 @@ class Settings(BaseSettings):
     LLM_MAX_TOKENS: int = Field(default=1000, env="LLM_MAX_TOKENS")
 
     # JWT 配置
-    JWT_SECRET_KEY = Field(default="JWT_KEY", env="JWT_SECRET_KEY")
-    JWT_ALGORITHM = Field(default="HS256", env="JWT_ALGORITHM")
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES = Field(default="3600", env ="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
+    JWT_SECRET_KEY : str = Field(default="JWT_KEY", env="JWT_SECRET_KEY")
+    JWT_ALGORITHM : str = Field(default="HS256", env="JWT_ALGORITHM")
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES : str = Field(default="3600", env ="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
 
     class Config:
         env_file = ".env"

@@ -17,17 +17,17 @@ def handle_register(request: RegisterRequest):
     if usersCollection.find_one_by_username(request.username):
         raise HTTPException(status_code=400, detail="Username already exists")
     hashed_password = hash_password(request.password)
-    usersCollection.insert_one({
-        "username": request.username,
-        "password": hashed_password,
-        "email": request.email
-    })
+    usersCollection.insert_one(user=UserInfo(
+        username=request.username,
+        email=request.email,
+        password=hashed_password
+    ))
     logger.info(f"User {request.username} registered successfully")
     return {"User registered"}
 
 def handle_login(request: LoginRequest):
     db_user = usersCollection.find_one_by_username(request.username)
-    if not db_user or not verify_password(request.password, db_user["password"]):
+    if not db_user or not verify_password(request.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(data={"sub": str(db_user.id)})
     logger.info(f"User {request.username} logged in successfully")
@@ -41,7 +41,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
-    expire = datetime.now() + (expires_delta or timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now() + (expires_delta or timedelta(minutes=float(settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 

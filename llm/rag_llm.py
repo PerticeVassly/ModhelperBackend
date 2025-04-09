@@ -17,6 +17,7 @@ class RAGLLM():
         for item in context:
             formatted_context += "这是关于{}的参考资料：\n".format(item.get("description"))
             formatted_context += item.get("content") + "\n"
+            formatted_context += "\n"
         return formatted_context
 
     def generate_response(
