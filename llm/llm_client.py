@@ -15,13 +15,14 @@ class LLMClient():
                  base_url: str = "https://api.deepseek.com",
                  termperature: float = 0.7,
                  max_tokens: int = 1000,
-                 stream: bool = False):
+                 stream: bool = False,
+                 messages: List[Dict[str, str]] = []):
         self.model_name = model_name
         self.api_key = api_key
         self.base_url = base_url
         self.temperature = termperature
         self.max_tokens = max_tokens
-        self.messages = []
+        self.messages = messages
         self.stream = stream
         assert self.api_key, "API key is required"
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)                           

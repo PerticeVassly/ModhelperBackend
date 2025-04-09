@@ -1,12 +1,12 @@
 from pydantic import BaseModel, EmailStr
 
-class UserRegister(BaseModel):
+class RegisterRequest(BaseModel):
     username: str
     email: EmailStr
     password: str
 
-class UserLogin(BaseModel):
+class LoginRequest(BaseModel):
     username: str
     password: str
 
-
+# TODO add response models

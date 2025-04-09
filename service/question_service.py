@@ -1,6 +1,6 @@
 from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM
 from db import conversationsCollection, messagesCollection, vectorDB
-from model import ConversationCreate, ChatMessage, MinecraftModKeywords, QuestionRequest, UserInfo
+from model import CreateConversationRequest, ChatRequest, MinecraftModKeywords, QuestionRequest, UserInfo
 from bson import ObjectId
 from datetime import datetime
 from config import settings
@@ -12,10 +12,12 @@ def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo):
     if not conversation or conversation.user_id != userInfo.id:
         raise HTTPException(status_code=400, detail="Conversation not found or user not matching")
     # use LLM to generate response
+    history = messagesCollection.find({"conversation_id": ObjectId(questionRequest.conversation_id)}).sort("timestamp", 1)
     non_rag = NonRAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=history))
     response = non_rag.generate_response(
         question=questionRequest.question)
+    # store 
     messagesCollection.insert_one({
         "conversation_id": ObjectId(questionRequest.conversation_id),
         "user_message": questionRequest.question,
@@ -29,6 +31,7 @@ def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo):
     conversation = conversationsCollection.find_one(questionRequest.conversation_id)
     if not conversation or conversation.user_id != userInfo.id:
         raise HTTPException(status_code=400, detail="Conversation not found or user not matching")
+    history = messagesCollection.find({"conversation_id": ObjectId(questionRequest.conversation_id)}).sort("timestamp", 1)
     topic_name = classify(questionRequest.question)
     keypoints = extract(
         text=questionRequest.question,
@@ -38,7 +41,7 @@ def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo):
         topic_name=topic_name)
     # use LLM to generate response
     rag = RAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=history))
     response = rag.generate_response(
         question=questionRequest.question,
         context=context,
@@ -51,15 +54,15 @@ def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo):
     })
     return response
 
-def handle_create_conversation(conv: ConversationCreate, userInfo : UserInfo):
+def handle_create_conversation(conv: CreateConversationRequest, userInfo : UserInfo):
     result = conversationsCollection.insert_one({
         "user_id": ObjectId(userInfo.id),
         "title": conv.title,
         "created_at": datetime.now()
     })
-    return {"conversation_id": str(result.inserted_id)}
+    return {str(result.inserted_id)}
 
-def handle_add_message(chat: ChatMessage, userInfo: UserInfo):
+def handle_add_message(chat: ChatRequest, userInfo: UserInfo):
     # check if the user do has this conversation
     conversation = conversationsCollection.find_one(ObjectId(chat.conversation_id))
     if not conversation or conversation.user_id != userInfo.id:
@@ -70,7 +73,7 @@ def handle_add_message(chat: ChatMessage, userInfo: UserInfo):
         "assistant_message": chat.assistant_message,
         "timestamp": datetime.now()
     })
-    return {"message": "Message added"}
+    return {"Message added"}
 
 def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo):
     # check if the user do has this conversation
@@ -84,6 +87,16 @@ def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo):
             "user": msg["user_message"],
             "assistant": msg["assistant_message"],
             "time": msg["timestamp"]
+        })
+    return result
+
+def handle_get_all_conversations(userInfo: UserInfo):
+    conversations = conversationsCollection.find({"user_id": ObjectId(userInfo.id)})
+    result = []
+    for conv in conversations:
+        result.append({
+            "id": str(conv["id"]),
+            "title": conv["title"],
         })
     return result
 
