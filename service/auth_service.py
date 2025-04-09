@@ -1,13 +1,13 @@
 from fastapi import HTTPException
-from db import users
+from db import users_collection
 from model import UserRegister, UserLogin
 import bcrypt
 from datetime import datetime
 
 def handle_register(user: UserRegister):
-    if users.find_one({"username": user.username}):
+    if users_collection.find_one({"username": user.username}):
         raise HTTPException(status_code=400, detail="Username already exists")
-    users.insert_one({
+    users_collection.insert_one({
         "username": user.username,
         "email": user.email,
         "password": hash_password(user.password),
@@ -16,7 +16,7 @@ def handle_register(user: UserRegister):
     return {"message": "User registered"}
 
 def handle_login(user: UserLogin):
-    db_user = users.find_one({"username": user.username})
+    db_user = users_collection.find_one({"username": user.username})
     if not db_user or not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return {"message": "Login successful", "user_id": str(db_user["_id"])}

@@ -1,5 +1,5 @@
 from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM
-from db import conversations, messages, vectorDB
+from db import conversations_collection, messages_collection, vectorDB
 from model import ConversationCreate, ChatMessage, MinecraftModKeywords
 from bson import ObjectId
 from datetime import datetime
@@ -34,7 +34,7 @@ def handle_rag_question(question : str):
     return response
 
 def handle_create_conversation(conv: ConversationCreate):
-    result = conversations.insert_one({
+    result = conversations_collection.insert_one({
         "user_id": ObjectId(conv.user_id),
         "title": conv.title,
         "created_at": datetime.now()
@@ -42,7 +42,7 @@ def handle_create_conversation(conv: ConversationCreate):
     return {"conversation_id": str(result.inserted_id)}
 
 def handle_add_message(chat: ChatMessage):
-    messages.insert_one({
+    messages_collection.insert_one({
         "conversation_id": ObjectId(chat.conversation_id),
         "user_message": chat.user_message,
         "assistant_message": chat.assistant_message,
@@ -51,7 +51,7 @@ def handle_add_message(chat: ChatMessage):
     return {"message": "Message added"}
 
 def handle_get_conversation_messages(conversation_id: str):
-    msg_cursor = messages.find({"conversation_id": ObjectId(conversation_id)}).sort("timestamp", 1)
+    msg_cursor = messages_collection.find({"conversation_id": ObjectId(conversation_id)}).sort("timestamp", 1)
     result = []
     for msg in msg_cursor:
         result.append({
