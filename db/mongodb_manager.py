@@ -48,6 +48,9 @@ class ConversationsCollection:
         if conversation:
             return ConversationInfo(**conversation)
         return None
+    
+    def delete_one(self, conversation_id: ObjectId) -> None:
+            self.collection.delete_one({"_id": conversation_id})
 
     def find_all_by_user_id(self, user_id: ObjectId) -> list[ConversationInfo]:
         conversations = self.collection.find({"user_id": user_id})
@@ -65,6 +68,9 @@ class ConversationsCollection:
 class MessagesCollection:
     def __init__(self):
         self.collection = db["messages"]
+
+    def delete_many_by_conversation_id(self, conversation_id: ObjectId) -> None:
+        self.collection.delete_many({"conversation_id": conversation_id})
     
     def find_all_by_conversation_id(self, conversation_id: ObjectId) -> list[MessageInfo]:
         messages = self.collection.find({"conversation_id": conversation_id}).sort([("timestamp", 1)])

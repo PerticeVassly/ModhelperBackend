@@ -63,6 +63,14 @@ def handle_create_conversation(conv: CreateConversationRequest, userInfo : UserI
     ))
     return {str(result.inserted_id)}
 
+def handle_delete_conversation(conversation_id : str, userInfo: UserInfo):
+    # check if the user do has this conversation
+    conversation = conversationsCollection.find_one(ObjectId(conversation_id))
+    if not conversation or conversation.user_id != userInfo.id:
+        raise HTTPException(status_code=400, detail="Conversation not found or user not matching")
+    conversationsCollection.delete_one(ObjectId(conversation_id))
+    messagesCollection.delete_many_by_conversation_id(conversation_id=ObjectId(conversation_id))
+
 def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo):
     # check if the user do has this conversation
     conversation = conversationsCollection.find_one(ObjectId(conversation_id))

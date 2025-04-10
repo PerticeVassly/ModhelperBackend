@@ -1,4 +1,4 @@
-from .question_service import handle_question, handle_rag_question, handle_create_conversation,handle_get_conversation_messages
+from .question_service import handle_question, handle_rag_question, handle_create_conversation,handle_get_conversation_messages, handle_delete_conversation
 from .auth_service import handle_register, handle_login, get_current_user, verify_token
 
 __all__ = [
@@ -9,5 +9,6 @@ __all__ = [
     handle_register,
     handle_login,
     get_current_user,
-    verify_token
+    verify_token,
+    handle_delete_conversation
 ]

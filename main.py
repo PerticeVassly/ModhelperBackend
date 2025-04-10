@@ -20,8 +20,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/api")
 app.include_router(question_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
 
 setup_logging()
 
