@@ -51,4 +51,3 @@ docker-compose.override.yml
 __data__/
 media/
 data/
-neo4j

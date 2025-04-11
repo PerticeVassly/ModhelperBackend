@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${DOCKER_REGISTRY}
+    image: $DOCKER_REGISTRY
     container_name: modhelper_backend
     ports:
       - "8000:8000"
@@ -12,6 +12,12 @@ services:
       - mongodb
     env_file:
       - .env
+    environment:
+      - NEO4J_URL=bolt://neo4j:7687
+      - MONGO_URL=mongodb://mongodb:27017
+      - LLM_API_KEY=$LLM_API_KEY
+      - EMBEDDING_API_KEY=$EMBEDDING_API_KEY
+      - NEO4J_PASSWORD=$NEO4J_PASSWORD
 
   neo4j:
     image: neo4j:5
@@ -22,10 +28,10 @@ services:
     environment:
       - NEO4J_AUTH=neo4j/password
     volumes:
-      - ./neo4j/data:/data
-      - ./neo4j/logs:/logs
-      - ./neo4j/import:/var/lib/neo4j/import
-      - ./neo4j/plugins:/plugins
+      - ./data/neo4j/data:/data
+      - ./data/neo4j/logs:/logs
+      - ./data/neo4j/import:/var/lib/neo4j/import
+      - ./data/neo4j/plugins:/plugins
   
   mongodb:
     image: mongo:latest
@@ -33,4 +39,4 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./mongodb/data:/data/db
+      - ./data/mongodb/data:/data/db
