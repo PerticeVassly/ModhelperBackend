@@ -45,7 +45,7 @@ deploy-job:      # This job runs in the deploy stage.
   stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
   environment: production
   script:
-    - scp ./docker-compose.yml "$DEPLOY_USER@$DEPLOY_SERVER:~/backend/"
+    - scp ./docker-compose.yml "$DEPLOY_USER@$DEPLOY_SERVER:~/backend"
     - ssh "$DEPLOY_USER@$DEPLOY_SERVER" \
         "cd backend; docker pull $DOCKER_REGISTRY; docker compose -f docker-compose.yml up neo4j mongodb -d; sleep 20; docker compose -f docker-compose.yml up app -d"
   only:
