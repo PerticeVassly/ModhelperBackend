@@ -15,7 +15,7 @@ services:
     environment:
       - NEO4J_URL=bolt://neo4j:7687
       - MONGO_URL=mongodb://mongodb:27017
-      - ALLOW_ORIGINS='["http://modhelper_frontend:80", "ws://modhelper_frontend:8000"]'
+      - ALLOW_ORIGINS='["http://172.29.4.206:80", "ws://172.29.4.206:8000"]'
       - LLM_API_KEY=$LLM_API_KEY
       - EMBEDDING_API_KEY=$EMBEDDING_API_KEY
       - NEO4J_PASSWORD=$NEO4J_PASSWORD
