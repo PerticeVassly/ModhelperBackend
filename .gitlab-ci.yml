@@ -56,9 +56,15 @@ deploy-job:      # This job runs in the deploy stage.
     - ssh "$DEPLOY_USER@$DEPLOY_SERVER" '
         cd ~/backend &&
         docker compose --env-file .env pull &&
-        docker compose --env-file .env up neo4j mongodb -d &&
+        for service in mongodb neo4j; do
+          if docker inspect "$service" >/dev/null 2>&1; then
+            echo "$service exists, skipping..."
+          else
+            docker compose --env-file .env up -d "$service"
+          fi
+        done &&
         sleep 20 &&
-        docker compose --env-file .env up app -d
+        docker compose --env-file .env up -d --force-recreate --no-deps app
       '
   only:
     - master
