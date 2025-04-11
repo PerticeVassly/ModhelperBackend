@@ -56,11 +56,10 @@ deploy-job:      # This job runs in the deploy stage.
     - |
       ssh "$DEPLOY_USER@$DEPLOY_SERVER" '
         cd ~/backend;
-        cat .env;
-        docker compose --env-file .env pull;
-        docker compose --env-file .env up -d --force-recreate neo4j mongodb;
+        docker compose pull;
+        docker compose up -d --force-recreate neo4j mongodb;
         sleep 20;
-        docker compose --env-file .env up -d --force-recreate --no-deps app;
+        docker compose up -d --force-recreate --no-deps backend;
       '
   only:
     - master

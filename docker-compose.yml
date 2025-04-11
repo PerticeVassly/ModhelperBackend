@@ -15,9 +15,12 @@ services:
     environment:
       - NEO4J_URL=bolt://neo4j:7687
       - MONGO_URL=mongodb://mongodb:27017
+      - ALLOW_ORIGINS=http://modhelper_frontend:80,ws://modhelper_frontend:8000
       - LLM_API_KEY=$LLM_API_KEY
       - EMBEDDING_API_KEY=$EMBEDDING_API_KEY
       - NEO4J_PASSWORD=$NEO4J_PASSWORD
+    networks:
+      - modhelper_net
 
   neo4j:
     image: neo4j:5
@@ -32,6 +35,8 @@ services:
       - ./data/neo4j/logs:/logs
       - ./data/neo4j/import:/var/lib/neo4j/import
       - ./data/neo4j/plugins:/plugins
+    networks:
+      - modhelper_net
   
   mongodb:
     image: mongo:latest
@@ -40,3 +45,9 @@ services:
       - "27017:27017"
     volumes:
       - ./data/mongodb/data:/data/db
+    networks:
+      - modhelper_net
+
+networks:
+  modhelper_net:
+    name: modhelper_net
