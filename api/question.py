@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from model import QuestionRequest, CreateConversationRequest, UserInfo
-from service import handle_rag_question, handle_create_conversation, handle_get_conversation_messages, get_current_user, handle_delete_conversation
+from service import handle_rag_question, handle_create_conversation, handle_get_conversation_messages, get_current_user, handle_delete_conversation, handle_get_all_conversations
 
 router = APIRouter()
 
@@ -26,6 +26,11 @@ def get_conversation_messages(conversation_id: str,
 def delete_conversation(conversation_id: str,
                         userInfo: UserInfo = Depends(get_current_user)):
     response = handle_delete_conversation(conversation_id, userInfo)
+    return response
+
+@router.get("/conversations")
+def get_all_conversations(userInfo: UserInfo = Depends(get_current_user)):
+    response = handle_get_all_conversations(userInfo)
     return response
 
     

@@ -5,6 +5,9 @@ from bson import ObjectId
 from datetime import datetime
 from config import settings
 from fastapi import HTTPException
+import logging
+
+logger = logging.getLogger("service")
 
 def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo):
     # check if the user do has this conversation
@@ -61,7 +64,8 @@ def handle_create_conversation(conv: CreateConversationRequest, userInfo : UserI
         title=conv.title,
         created_at=datetime.now()
     ))
-    return {str(result.inserted_id)}
+    logger.info(f"Conversation created with id: {result.inserted_id}")
+    return {"id" : str(result.inserted_id), "title" : conv.title}
 
 def handle_delete_conversation(conversation_id : str, userInfo: UserInfo):
     # check if the user do has this conversation
@@ -80,9 +84,9 @@ def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo):
     result = []
     for msg in msg_cursor:
         result.append({
-            "user": msg["user_message"],
-            "assistant": msg["assistant_message"],
-            "time": msg["timestamp"]
+            "user": msg.user_message,
+            "assistant": msg.assistant_message,
+            "time": msg.timestamp
         })
     return result
 
@@ -91,8 +95,8 @@ def handle_get_all_conversations(userInfo: UserInfo):
     result = []
     for conv in conversations:
         result.append({
-            "id": str(conv["id"]),
-            "title": conv["title"],
+            "id": str(conv.id),
+            "title": conv.title,
         })
     return result
 

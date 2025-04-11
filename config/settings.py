@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     MONGO_URL: str = Field(default="mongodb://localhost:27017", env="MONGO_URL")
     
     # CORS 配置
-    ALLOW_ORIGINS: List[str] = Field(default=["localhost:5173"], env="ALLOW_ORIGINS")  # Frontend URL
+    ALLOW_ORIGINS: List[str] = Field(default=["http://localhost:5173"], env="ALLOW_ORIGINS")  # Frontend URL
     ALLOW_HEADERS: List[str] = Field(default=["*"], env="ALLOW_HEADERS")
     ALLOW_METHODS: List[str] = Field(default=["*"], env="ALLOW_METHODS")
     ALLOW_CREDENTIALS: bool = Field(default=True, env="ALLOW_CREDENTIALS")
