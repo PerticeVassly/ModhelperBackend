@@ -45,8 +45,21 @@ deploy-job:      # This job runs in the deploy stage.
   stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
   environment: production
   script:
-    - scp ./docker-compose.yml "$DEPLOY_USER@$DEPLOY_SERVER:~/backend/docker-compose.yml"
-    - ssh "$DEPLOY_USER@$DEPLOY_SERVER" \
-        "cd backend; docker pull $DOCKER_REGISTRY; docker compose -f docker-compose.yml up neo4j mongodb -d; sleep 20; docker compose -f docker-compose.yml up app -d"
+    # 生成env文件
+    - rm .env
+    - echo "DOCKER_REGISTRY=$DOCKER_REGISTRY" > .env
+    - echo "LLM_API_KEY=$LLM_API_KEY" >> .env
+    - echo "EMBEDDING_API_KEY=$EMBEDDING_API_KEY" >> .env
+    - echo "NEO4J_PASSWORD=$NEO4J_PASSWORD"
+
+    - scp docker-compose.yml .env "$DEPLOY_USER@$DEPLOY_SERVER:~/backend/"
+
+    - ssh "$DEPLOY_USER@$DEPLOY_SERVER" '
+        cd ~/backend &&
+        docker compose --env-file .env pull &&
+        docker compose --env-file .env up neo4j mongodb -d &&
+        sleep 20 &&
+        docker compose --env-file .env up app -d
+      '
   only:
     - master
