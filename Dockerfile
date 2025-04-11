@@ -1,8 +1,10 @@
-FROM python:3.10
+FROM python:3.10-slim
 
 WORKDIR /app
 COPY . /app
 
 RUN pip install -r requirements.txt
 
-CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN mkdir -p /data/chromadb /data/sqlite3
+
+CMD [ "python3", "main.py" ]

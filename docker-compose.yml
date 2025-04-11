@@ -1,0 +1,36 @@
+services:
+  app:
+    image: ${DOCKER_REGISTRY}
+    container_name: modhelper_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/sqlite3:/app/sqlite3
+      - ./data/chromadb:/app/chromadb
+    depends_on:
+      - neo4j
+      - mongodb
+    env_file:
+      - .env
+
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j
+    ports:
+      - "7474:7474"     # 浏览器访问 Neo4j Studio
+      - "7687:7687"     # Bolt 协议，代码连接
+    environment:
+      - NEO4J_AUTH=neo4j/password
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs
+      - ./neo4j/import:/var/lib/neo4j/import
+      - ./neo4j/plugins:/plugins
+  
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongodb/data:/data/db

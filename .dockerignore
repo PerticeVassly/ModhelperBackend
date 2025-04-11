@@ -1,0 +1,26 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+
+# Node dependencies
+node_modules/
+
+# Local Neo4j volumes
+neo4j/
+
+# SQLite and ChromaDB local data
+*.db
+*.sqlite3
+data
+
+# Logs, envs, and IDE stuff
+*.log
+*.env
+.idea/
+.vscode/
