@@ -53,7 +53,8 @@ deploy-job:      # This job runs in the deploy stage.
 
     - scp docker-compose.yml .env "$DEPLOY_USER@$DEPLOY_SERVER:~/backend/"
 
-    - ssh "$DEPLOY_USER@$DEPLOY_SERVER" '
+    - |
+      ssh "$DEPLOY_USER@$DEPLOY_SERVER" '
         cd ~/backend &&
         docker compose --env-file .env pull &&
         for service in mongodb neo4j; do
@@ -63,6 +64,7 @@ deploy-job:      # This job runs in the deploy stage.
             docker compose --env-file .env up -d "$service"
           fi
         done &&
+        echo "⏳ Waiting for neo4j to run..." &&
         sleep 20 &&
         docker compose --env-file .env up -d --force-recreate --no-deps app
       '
