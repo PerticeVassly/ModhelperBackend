@@ -46,11 +46,10 @@ deploy-job:      # This job runs in the deploy stage.
   environment: production
   script:
     # 生成env文件
-    - rm .env
     - echo "DOCKER_REGISTRY=$DOCKER_REGISTRY" > .env
     - echo "LLM_API_KEY=$LLM_API_KEY" >> .env
     - echo "EMBEDDING_API_KEY=$EMBEDDING_API_KEY" >> .env
-    - echo "NEO4J_PASSWORD=$NEO4J_PASSWORD"
+    - echo "NEO4J_PASSWORD=$NEO4J_PASSWORD" >> .env
 
     - scp docker-compose.yml .env "$DEPLOY_USER@$DEPLOY_SERVER:~/backend/"
 
