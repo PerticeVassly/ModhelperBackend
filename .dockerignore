@@ -11,9 +11,6 @@ env/
 # Node dependencies
 node_modules/
 
-# Local Neo4j volumes
-neo4j/
-
 # SQLite and ChromaDB local data
 *.db
 *.sqlite3
