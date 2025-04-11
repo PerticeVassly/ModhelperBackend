@@ -7,6 +7,7 @@ __pycache__/
 .Python
 venv/
 env/
+.env
 pip-log.txt
 pip-wheel-metadata/
 poetry.lock
@@ -49,3 +50,4 @@ docker-compose.override.yml
 *.db
 __data__/
 media/
+data/

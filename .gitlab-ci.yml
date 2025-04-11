@@ -46,6 +46,6 @@ deploy-job:      # This job runs in the deploy stage.
   environment: production
   script:
     - ssh "$DEPLOY_USER@$DEPLOY_SERVER" \
-        "echo $DOCKER_REGISTRY; docker pull $DOCKER_REGISTRY; docker stop modhelper-back; docker rm modhelper-back; docker run -d --name modhelper-back -p 8000:8000 $DOCKER_REGISTRY"
+        "docker pull $DOCKER_REGISTRY; docker compose -f docker-compose.yml up neo4j mongodb -d; sleep 20; docker compose -f docker-compose.yml up app -d"
   only:
     - master
