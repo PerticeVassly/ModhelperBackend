@@ -5,9 +5,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data/sqlite3:/app/sqlite3
-      - ./data/chromadb:/app/chromadb
-      - ./data/raw_data:/app/data/raw
+      - ./data:/app/data
       - ./logs:/app/logs
     depends_on:
       - neo4j
