@@ -7,6 +7,8 @@ services:
     volumes:
       - ./data/sqlite3:/app/sqlite3
       - ./data/chromadb:/app/chromadb
+      - ./data/raw_data:/app/data/raw
+      - ./logs:/app/logs
     depends_on:
       - neo4j
       - mongodb

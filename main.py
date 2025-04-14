@@ -1,4 +1,5 @@
 import uvicorn
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,6 +11,8 @@ from api import question_router
 from config import settings, setup_logging
 
 app= FastAPI()
+
+logging.getLogger("watchfiles").setLevel(logging.WARNING)
 
 # Configure CORS
 app.add_middleware(
