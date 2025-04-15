@@ -58,7 +58,6 @@ deploy-job:      # This job runs in the deploy stage.
         cd ~/backend;
         docker compose pull;
         docker compose up -d --force-recreate neo4j mongodb;
-        sleep 20;
         docker compose up -d --force-recreate --no-deps backend;
       '
   only:
