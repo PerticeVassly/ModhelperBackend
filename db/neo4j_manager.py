@@ -3,18 +3,19 @@ from typing import List
 from .base import BaseGraphDB, ModRelation
 from config import settings
 import logging
+import time
 
 logger = logging.getLogger("database")
 
 class Neo4jGraphDB(BaseGraphDB):
     def __init__(self):
         self.driver = GraphDatabase.driver(
-            settings.NEO4J_URI, 
+            settings.NEO4J_URL, 
             auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
         )
         self._test_connection()
         self._init_constraints()
-        logger.info(f"Connected to Neo4j at {settings.NEO4J_URI}")
+        logger.info(f"Connected to Neo4j at {settings.NEO4J_URL}")
 
     def _test_connection(self):
         try:

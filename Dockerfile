@@ -1,8 +1,14 @@
-FROM python:3.10
+FROM python:3.10-slim
 
 WORKDIR /app
+
+COPY requirements.txt .
+
+# for cache
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+
 COPY . /app
 
-RUN pip install -r requirements.txt
+RUN mkdir -p /data/chromadb /data/sqlite3
 
-CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD [ "python3", "main.py" ]
