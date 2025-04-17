@@ -1,5 +1,6 @@
 from typing import Dict, List, Union
 from openai import OpenAI
+import copy
 
 import logging
 
@@ -22,7 +23,7 @@ class LLMClient():
         self.base_url = base_url
         self.temperature = termperature
         self.max_tokens = max_tokens
-        self.messages = messages
+        self.messages = copy.deepcopy(messages)
         self.stream = stream
         assert self.api_key, "API key is required"
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)                           

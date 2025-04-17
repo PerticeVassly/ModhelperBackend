@@ -14,9 +14,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 logger = logging.getLogger("service")
 
 def handle_register(request: RegisterRequest):
+    # check if the user already exists
     if usersCollection.find_one_by_username(request.username):
         raise HTTPException(status_code=400, detail="Username already exists")
-    hashed_password = hash_password(request.password)
+    # register the user
+    hashed_password = __hash_password(request.password)
     usersCollection.insert_one(user=UserInfo(
         username=request.username,
         email=request.email,
@@ -26,20 +28,34 @@ def handle_register(request: RegisterRequest):
     return {"User registered"}
 
 def handle_login(request: LoginRequest):
+    # login
     db_user = usersCollection.find_one_by_username(request.username)
     if not db_user or not verify_password(request.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_access_token(data={"sub": str(db_user.id)})
+    # generate token
+    token = __create_access_token(data={"sub": str(db_user.id)})
     logger.info(f"User {request.username} logged in successfully")
     return {"access_token": token, "token_type": "bearer"}
 
-def hash_password(password: str) -> str:
+def handle_guest_login():
+    # create a tmp user
+    tmp_user = UserInfo(
+        username="",
+        email="guest@gmail.com",
+        password= __hash_password("guest")
+    )
+    result = usersCollection.insert_one(user=tmp_user)
+    token = __create_access_token(data={"sub": str(result.inserted_id)})
+    logger.info(f"Guest user {tmp_user.username} logged in successfully")
+    return {"access_token": token, "token_type": "bearer"}
+
+def __hash_password(password: str) -> str:
   return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 def verify_password(password: str, hashed: str) -> bool:
   return bcrypt.checkpw(password.encode(), hashed.encode())
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def __create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     expire = datetime.now() + (expires_delta or timedelta(minutes=float(settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)))
     to_encode.update({"exp": expire})

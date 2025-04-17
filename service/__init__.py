@@ -1,15 +1,9 @@
-from .question_service import handle_question, handle_rag_question, handle_create_conversation,handle_get_conversation_messages, handle_delete_conversation, handle_get_all_conversations
-from .auth_service import handle_register, handle_login, get_current_user, verify_token
+import inspect
 
-__all__ = [
-    handle_question,
-    handle_rag_question,
-    handle_create_conversation,
-    handle_get_conversation_messages,
-    handle_register,
-    handle_login,
-    get_current_user,
-    verify_token,
-    handle_delete_conversation,
-    handle_get_all_conversations
-]
+def get_exportable(module):
+  return [name for name, obj in inspect.getmembers(module) if not name.startswith('__') and callable(obj)]
+
+from .question_service import *
+from .auth_service import *
+
+__all__ = get_exportable(locals())
