@@ -26,6 +26,7 @@ build-job:       # This job runs in the build stage, which runs first.
   script:
     - docker build --network=host -t "$DOCKER_REGISTRY" .
     - docker push "$DOCKER_REGISTRY"
+    - docker image prune -f
 
 unit-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
@@ -56,9 +57,7 @@ deploy-job:      # This job runs in the deploy stage.
     - |
       ssh "$DEPLOY_USER@$DEPLOY_SERVER" '
         cd ~/backend;
-        docker compose pull;
-        docker compose up -d --force-recreate neo4j mongodb;
-        docker compose up -d --force-recreate --no-deps backend;
+        docker compose up -d --force-recreate backend;
       '
   only:
     - master
