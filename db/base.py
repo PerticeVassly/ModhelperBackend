@@ -40,10 +40,10 @@ class BaseMetadataDB(ABC):
 
 class BaseVectorDB(ABC):
     @abstractclassmethod
-    def add(self, mod_name: str, text: str, embedding: List[float]) -> bool: ...
+    def add(self, mod_name: str, text: str) -> bool: ...
     
     @abstractclassmethod
-    def search(self, query_embedding: List[float], top_k: int = 5) -> List[Dict[str, Any]]: ...
+    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]: ...
 
 class BaseGraphDB(ABC):
     @abstractclassmethod
@@ -54,3 +54,5 @@ class BaseGraphDB(ABC):
     
     @abstractclassmethod
     def check_conflict(self, mod_name1: str, mod_name2: str) -> bool: ...
+
+

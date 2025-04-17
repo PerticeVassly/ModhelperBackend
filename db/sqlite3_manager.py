@@ -1,7 +1,6 @@
 import sqlite3
-import json
 import logging
-from typing import List, Optional
+from typing import Optional
 from .base import BaseMetadataDB, ModMetadata
 from config import settings
 from pathlib import Path
@@ -36,7 +35,7 @@ class SQLiteMetadataDB(BaseMetadataDB):
             cursor = self.conn.cursor()    
             self.conn.execute(
                 "INSERT INTO mod_info (name, tags, description, support_platform, download_url) VALUES (?, ?, ?, ?, ?)",
-                (mod.name, ",".join(mod.tags), mod.description, mod.support_platform, mod.download_url)
+                (mod.name, ",".join(mod.tags), mod.description, mod.support_platform.value, mod.download_url)
             )
             self.conn.commit()
             logger.info(f"Added mod {mod.name} successfully.")
@@ -47,7 +46,7 @@ class SQLiteMetadataDB(BaseMetadataDB):
     
     def get(self, name: str) -> Optional[ModMetadata]:
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM mods WHERE name = ?", (name,))
+        cursor.execute("SELECT * FROM mod_info WHERE name = ?", (name,))
         if row := cursor.fetchone():
             return ModMetadata(
                 name=row[1],
@@ -77,3 +76,6 @@ class SQLiteMetadataDB(BaseMetadataDB):
     def __del__(self):
         self.conn.close()
         logger.info("SQLite connection closed.")
+
+
+relationDB = SQLiteMetadataDB()

@@ -40,6 +40,11 @@ LOGGING_CONFIG = {
             "handlers": ["console", "file"],
             "propagate": False,
         },
+        "llm": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+            "propagate": False,
+        },
     },
     "root": {
         "level": "INFO",
