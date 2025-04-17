@@ -52,6 +52,13 @@ class ConversationsCollection:
     def delete_one(self, conversation_id: ObjectId) -> None:
             self.collection.delete_one({"_id": conversation_id})
 
+    def update_ones_title(self, conversation_id : ObjectId, new_title : str) -> None:
+        self.collection.update_one(
+            {"_id": conversation_id},
+            {"$set": {"title": new_title}}
+        )
+        logger.info(f"Conversation {conversation_id} updated to {new_title}")
+
     def find_all_by_user_id(self, user_id: ObjectId) -> list[ConversationInfo]:
         conversations = self.collection.find({"user_id": user_id})
         return [ConversationInfo(**conversation) for conversation in conversations]
