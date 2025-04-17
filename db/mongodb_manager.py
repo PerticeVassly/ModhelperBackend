@@ -28,16 +28,16 @@ class UsersCollection:
             return UserInfo(**user)
         return None
     
-    def insert_one(self, user: UserInfo) -> bool:
+    def insert_one(self, user: UserInfo) -> InsertOneResult:
         try:
             # replace id into _id
             tmp = user.model_dump()
             tmp.pop("id")
-            self.collection.insert_one(tmp)
-            return True
+            ans = self.collection.insert_one(tmp)
+            return ans
         except Exception as e:
             logger.error(f"Error inserting user: {e}")
-            return False
+            return None
 
 class ConversationsCollection:
     def __init__(self):

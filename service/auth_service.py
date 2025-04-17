@@ -37,6 +37,18 @@ def handle_login(request: LoginRequest):
     logger.info(f"User {request.username} logged in successfully")
     return {"access_token": token, "token_type": "bearer"}
 
+def handle_guest_login():
+    # create a tmp user
+    tmp_user = UserInfo(
+        username="",
+        email="guest@gmail.com",
+        password= __hash_password("guest")
+    )
+    result = usersCollection.insert_one(user=tmp_user)
+    token = __create_access_token(data={"sub": str(result.inserted_id)})
+    logger.info(f"Guest user {tmp_user.username} logged in successfully")
+    return {"access_token": token, "token_type": "bearer"}
+
 def __hash_password(password: str) -> str:
   return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 

@@ -29,7 +29,8 @@ async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo
     messagesCollection.insert_one(message=new_message)
     # async summarize
     history.append(new_message)
-    asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
+    if not len(history) > 3:
+        asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
     return response
 
 async def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo):
@@ -65,7 +66,8 @@ async def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserI
     messagesCollection.insert_one(message=new_message)
     # async summarize
     history.append(new_message)
-    asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
+    if not len(history) > 3:
+        asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
     return response
 
 def handle_create_conversation(request: CreateConversationRequest, userInfo : UserInfo):
