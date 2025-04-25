@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # JWT 配置
     JWT_SECRET_KEY : str = Field(default="JWT_KEY", env="JWT_SECRET_KEY")
     JWT_ALGORITHM : str = Field(default="HS256", env="JWT_ALGORITHM")
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES : str = Field(default="3600", env ="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES : str = Field(default="3600000", env ="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
 
     class Config:
         env_file = ".env"

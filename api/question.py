@@ -5,9 +5,9 @@ from service import handle_rag_question, handle_create_conversation, handle_get_
 router = APIRouter()
 
 @router.post("/question")
-def question(request: QuestionRequest,
+async def question(request: QuestionRequest,
                    userInfo: UserInfo = Depends(get_current_user)):
-    response = handle_rag_question(request, userInfo)
+    response = await handle_rag_question(request, userInfo)
     return response
 
 @router.post("/conversation")

@@ -6,5 +6,3 @@ class QuestionRequest(BaseModel):
 
 class CreateConversationRequest(BaseModel):
     title: str
-
-# TODO add response models
