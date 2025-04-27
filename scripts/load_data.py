@@ -2,10 +2,10 @@ import json
 from db import *
 import sys
 
-tag = "new"
+tag = ""
 
 def load_guide():
-    with open(f"./data/raw/guide_page{tag}.json") as file:
+    with open(f"./data/raw/{tag}/guide_page.json") as file:
         file = json.load(file)
         
         for mod in file:
@@ -19,7 +19,7 @@ def load_guide():
         
 
 def load_detail():
-    with open(f"./data/raw/detail_page{tag}.json") as file:
+    with open(f"./data/raw/{tag}/detail_page.json") as file:
         file = json.load(file)
         
         for mod in file:
@@ -55,8 +55,8 @@ def str2platform(a: str) -> ModPlatform:
 
 if __name__ == "__main__":    
     if len(sys.argv) > 1:
-        tag = "_" + sys.argv[1]
+        tag = sys.argv[1]
     else:
-        tag = ""
+        tag = "base"
     load_guide()
     load_detail()
