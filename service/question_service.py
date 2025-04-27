@@ -23,6 +23,7 @@ async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
         user_message=questionRequest.question,
+        reference=[],
         assistant_message=response,
         timestamp=datetime.now()
     )
@@ -31,7 +32,10 @@ async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo
     history.append(new_message)
     if not len(history) > 3:
         asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
-    return response
+    return {
+        "response": response,
+        "reference": []
+    }
 
 async def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo):
      # check if the user do has this conversation
@@ -60,6 +64,7 @@ async def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserI
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
         user_message=questionRequest.question,
+        reference=context,
         assistant_message=response,
         timestamp=datetime.now()
     )
@@ -68,7 +73,10 @@ async def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserI
     history.append(new_message)
     if not len(history) > 3:
         asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
-    return response
+    return {
+        "response": response,
+        "reference": context
+    }
 
 def handle_create_conversation(request: CreateConversationRequest, userInfo : UserInfo):
     result = conversationsCollection.insert_one(conversation=ConversationInfo(
@@ -95,6 +103,7 @@ def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo):
     for msg in msgs:
         result.append({
             "user": msg.user_message,
+            "reference": msg.reference,
             "assistant": msg.assistant_message,
             "time": msg.timestamp
         })
