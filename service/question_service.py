@@ -10,17 +10,17 @@ import asyncio
 
 logger = logging.getLogger("service")
 
-def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
+async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
     extractor = ExtractorLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
     extractedInfo = extractor.extract(input=questionRequest.question)
     # TODO: try deploy a small llm to do this to save time ?
     if extractedInfo.is_mc: 
-        return __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
+        return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
     else:
-        return __handle_non_rag_question(questionRequest=questionRequest, userInfo=UserInfo) 
+        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=UserInfo) 
         
-def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
+async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
     # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
@@ -47,7 +47,7 @@ def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : User
         references=[]
     )
 
-def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
+async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
      # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history

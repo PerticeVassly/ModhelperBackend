@@ -26,8 +26,7 @@ def handle_register(request: RegisterRequest) -> RegisterResponse:
     ))
     logger.info(f"User {request.username} registered successfully")
     return RegisterResponse(
-        username=request.username,
-        email=request.email
+        message="User registered successfully"
     )
 
 def handle_login(request: LoginRequest) -> LoginResponse:
