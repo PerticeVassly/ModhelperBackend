@@ -16,16 +16,29 @@ class LLMClient():
                  temperature: float = 0.7,
                  max_tokens: int = 1000,
                  stream: bool = False,
-                 history: list[dict[str, str]] = []):
+                 messages: list[MessageInfo] = []):
         self.model_name = model_name
         self.api_key = api_key
         self.base_url = base_url
         self.temperature = temperature
         self.max_tokens = max_tokens
-        self.history = copy.deepcopy(history)
+        self.history = self.__convert_messages(messages)
         self.stream = stream
         assert self.api_key, "API key is required"
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)                           
+
+    def __convert_messages(self, messages: list[MessageInfo]) -> list[dict[str, str]]:
+        converted_messages = []
+        for message in messages:
+            converted_messages.append({
+                "role": "user",
+                "content": message.user_message
+            })
+            converted_messages.append({
+                "role": "assistant",
+                "content": message.assistant_message
+            })
+        return converted_messages
 
     def generate_response(
         self, 
@@ -121,7 +134,7 @@ class SummarizeLLM():
         self.summarize_prompt = SummarizePrompt()
         self.retry_prompt = RetryPrompt()
         
-    def summarize(self, messages: list[MessageInfo], old_name: str) -> dict:
+    def summarize(self, messages: list[MessageInfo], old_name: str) -> SummarizeTitle:
         prompt = self.summarize_prompt.render(messages=messages, old_name=old_name)
         response = self.llm_client.generate_response(prompt)
         summarized = self.check_and_convert(response)

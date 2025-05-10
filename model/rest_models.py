@@ -25,7 +25,7 @@ class QuestionRequest(BaseModel):
 
 class QuestionResponse(BaseModel):
     response: str
-    references: list[Reference]
+    reference: list[Reference]
         
 class CreateConversationRequest(BaseModel):
     title: str

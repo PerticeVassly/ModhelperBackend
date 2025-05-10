@@ -18,16 +18,16 @@ async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo
     if extractedInfo.is_mc: 
         return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
     else:
-        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=UserInfo) 
+        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo) 
         
 async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
     # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
-    history = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
+    messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # chat with llm
     non_rag = NonRAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, history=history))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
     response = non_rag.chat(question=questionRequest.question)
     # save message
     new_message = MessageInfo(
@@ -39,26 +39,26 @@ async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo 
     )
     messagesRepository.insert_one(message=new_message)
     # async summarize
-    history.append(new_message)
-    if not len(history) > 5:
-        asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
+    messages.append(new_message)
+    if not len(messages) > 5:
+        asyncio.create_task(__summarize(messages=messages, concersation_id=questionRequest.conversation_id))
     return QuestionResponse(
         response=response,
-        references=[]
+        reference=[]
     )
 
 async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
      # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
-    history = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
+    messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # retrieve context based on extracted info
     context = __retrieve(
         extractedInfo=extractedInfo,
         text=questionRequest.question)
     # chat with llm
     rag = RAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, history=history))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
     response = rag.chat(
         question=questionRequest.question,
         context=context)
@@ -72,12 +72,12 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     )
     messagesRepository.insert_one(message=new_message)
     # async summarize
-    history.append(new_message)
-    if not len(history) > 3:
-        asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
+    messages.append(new_message)
+    if not len(messages) > 3:
+        asyncio.create_task(__summarize(messages=messages, concersation_id=questionRequest.conversation_id))
     return  QuestionResponse(
         response=response,
-        references=context
+        reference=context
     )
 def handle_create_conversation(request: CreateConversationRequest, userInfo : UserInfo) -> CreateConversationResponse:
     result = conversationsRepository.insert_one(conversation=ConversationInfo(
@@ -132,8 +132,8 @@ async def __summarize(messages : list[MessageInfo], concersation_id : str) -> No
     conversation = conversationsRepository.find_one(ObjectId(concersation_id))
     llm = SummarizeLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
-    json_response = llm.summarize(messages=messages, old_name=conversation.title)
-    new_title = json_response["title"][0]
+    summarizeTitle = llm.summarize(messages=messages, old_name=conversation.title)
+    new_title = summarizeTitle.title
     # save new title
     conversationsRepository.update_ones_title(
         conversation_id=ObjectId(concersation_id),

@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from enum import Enum
 from typing import Literal
 from typing import Optional
+from typing import Union
 
 class Reference(BaseModel):
     description: str
@@ -24,7 +25,7 @@ class ExtractedFields(BaseModel):
 class ExtractedInfo(BaseModel):
     is_mc: Literal[0, 1]
     extraction_fields: Optional[ExtractedFields]
-    intention: intentionEnum
+    intention: Union[intentionEnum, Literal[''], None]
 
 class SummarizeTitle(BaseModel):
     title: str
