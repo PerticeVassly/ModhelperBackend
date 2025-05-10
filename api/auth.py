@@ -4,12 +4,12 @@ from fastapi import APIRouter, Request
 
 router = APIRouter()
 
-@router.post("/register", response_model=RegisterResponse)
+@router.post("/register", response_model = RegisterResponse)
 def register(request: RegisterRequest):
     response = handle_register(request)
     return response
 
-@router.post("/login", response_model=LoginResponse)
+@router.post("/login", response_model = LoginResponse)
 def login(request: LoginRequest, raw_request: Request):
     response = None;
     if (raw_request.query_params.get("key") == "guest"):

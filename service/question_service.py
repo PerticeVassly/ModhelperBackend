@@ -10,25 +10,25 @@ import asyncio
 
 logger = logging.getLogger("service")
 
-async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
+def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
     extractor = ExtractorLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
-    extractedInfo = extractor.extract(input_text=questionRequest.question)
+    extractedInfo = extractor.extract(input=questionRequest.question)
     # TODO: try deploy a small llm to do this to save time ?
     if extractedInfo.is_mc: 
-        return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
+        return __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
     else:
-        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=UserInfo) 
+        return __handle_non_rag_question(questionRequest=questionRequest, userInfo=UserInfo) 
         
-async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
+def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
     # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
     history = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # chat with llm
     non_rag = NonRAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=history))
-    response = non_rag.generate_response(question=questionRequest.question)
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, history=history))
+    response = non_rag.chat(question=questionRequest.question)
     # save message
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
@@ -40,14 +40,14 @@ async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo 
     messagesRepository.insert_one(message=new_message)
     # async summarize
     history.append(new_message)
-    if not len(history) > settings.MAX_SUMMARY_LENGTH:
+    if not len(history) > 5:
         asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
     return QuestionResponse(
         response=response,
         references=[]
     )
 
-async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
+def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
      # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
@@ -58,8 +58,8 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
         text=questionRequest.question)
     # chat with llm
     rag = RAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=history))
-    response = rag.generate_response(
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, history=history))
+    response = rag.chat(
         question=questionRequest.question,
         context=context)
     # save message

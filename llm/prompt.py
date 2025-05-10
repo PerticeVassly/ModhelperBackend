@@ -9,11 +9,6 @@ import json
 logger = logging.getLogger("prompt")
 
 class Prompt(ABC):
-    """
-    Basic class for all prompts.
-
-    Contaings a template and method of how to render it.
-    """
     def __init__(self, template: str):
         self.template = template
 
@@ -27,17 +22,17 @@ class ExtractorPrompt(Prompt):
         template = textwrap.dedent("""
             针对给定的文本，回答以下问题并且提取关键信息
             1. 问题是否是Minecraft/我的世界/MC 模组相关问题，使用0/1表示
-            2. 如果是Minecraft/我的世界/MC 模组相关问题，提取出问题中的感兴趣实体信息，包括模组名称、物品名称、方块名称，世界名称群系名称，使用json格式返回结果；若不是MCmod相关问题则反回空列表即可
-            3. 如果是MC相关问题，判断问题的意图，从“模组基本信息查询”，“模组玩法攻略查询”，“模组推荐”，“整合包定制”，四个意图中选择一个返回，分别使用 basic_info、gameplay_guide、mod_recommendation、pack_customization表示；如果不是MCmod相关问题，返回空字符串即可
+            2. 如果是Minecraft/我的世界/MC 模组相关问题，提取出问题中的感兴趣实体信息，包括模组名称、物品名称、方块名称，世界名称，群系名称，使用json格式返回结果；若不是MCmod相关问题则反回空列表即可
+            3. 如果是MC相关问题，判断问题的意图，从“模组基本信息查询”，“模组玩法攻略查询”，“模组推荐”，“整合包定制”，“其他”，五个意图中选择一个返回，分别使用 basic_info、gameplay_guide、mod_recommendation、pack_customization、other 表示；如果不是MCmod相关问题，返回空字符串即可
             返回格式例子如下, 请严格遵守：                       
             {format}
-            文本: {input_text}
+            文本: {text}
         """)
         super().__init__(template)
 
-    def render(self, input_text : str) -> str:       
+    def render(self, text : str) -> str:       
         ans = self.template.format(
-            input_text=input_text,
+            text=text,
             format=json.dumps(extractedInfoExample.model_dump(), ensure_ascii=False, indent=2)
         )
         return ans
@@ -64,9 +59,9 @@ class RAGPrompt(Prompt):
         """)
         super().__init__(template)
 
-    def render(self, context_content: list[Reference], question: str) -> str:
+    def render(self, context: list[Reference], question: str) -> str:
         ans = self.template.format(
-            context= json.dumps([item.model_dump() for item in context_content], ensure_ascii=False),
+            context= json.dumps([ref.model_dump() for ref in context], ensure_ascii=False),
             question=question
         )
         return ans
