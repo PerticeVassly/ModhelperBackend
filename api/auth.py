@@ -1,19 +1,18 @@
-from model import RegisterRequest, LoginRequest
+from model import *
 from service import handle_register, handle_login, handle_guest_login
 from fastapi import APIRouter, Request
 
 router = APIRouter()
 
-@router.post("/register")
+@router.post("/register", response_model=RegisterResponse)
 def register(request: RegisterRequest):
     response = handle_register(request)
     return response
 
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
 def login(request: LoginRequest, raw_request: Request):
     response = None;
     if (raw_request.query_params.get("key") == "guest"):
-        # Handle guest login
         response = handle_guest_login()
     else:
         response = handle_login(request)
