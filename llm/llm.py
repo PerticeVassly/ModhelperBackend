@@ -71,33 +71,24 @@ class ExtractorLLM():
             input_text=input_text
         )
         response = self.llm_client.generate_response(prompt)
-        checked_response = self.check_response_format(response, ExtractedInfo)
-        return ExtractedInfo(
-            is_mc=checked_response["is_mc"],
-            extraction_fields=ExtractedFields(
-                mod_name=checked_response["extraction_fields"]["mod_name"],
-                item_name=checked_response["extraction_fields"]["item_name"],
-                block_name=checked_response["extraction_fields"]["block_name"],
-                world_name=checked_response["extraction_fields"]["world_name"],
-                biome_name=checked_response["extraction_fields"]["biome_name"]
-            ),
-            intention=intentionEnum(checked_response["intention"])
-        )
+        checked_response = self.check_response_format(response)
+        return checked_response
     
-    def check_response_format(self, response: str, response_format_class : Type[BaseModel]) -> dict:
+    def check_response_format(self, response: str) -> BaseModel:
         for i in range(self.max_retry_count):
             if (response.startswith("```json")):
                 response = response.replace("```json", "").replace("```", "").strip()
             try:
                 response_loaded = json.loads(response)
                 # Check if all keys are present in the response
-                if all(key in response_loaded for key in response_format_class.model_json_schema().keys()):
-                    return response_loaded
-                else:
-                    logger.error(f"Response missing keys: {response}")
+                is_valid = all(key in response_loaded for key in extractedInfoExample.model_dump().keys())
+                if is_valid:
+                    # Validate the response against the example
+                    instance = ExtractedInfo.model_validate(response_loaded)
+                    return instance
             except json.JSONDecodeError:
                 pass
-            prompt = self.retry_prompt.render(response_format=response_format_class)
+            prompt = self.retry_prompt.render(extractedInfoExample)
             response = self.llm_client.generate_response(prompt)
         logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
 
@@ -141,25 +132,25 @@ class SummarizeLLM():
     def summarize(self, messages: list[MessageInfo], old_name: str) -> dict:
         prompt = self.summarize_prompt.render(messages=messages, old_name=old_name)
         response = self.llm_client.generate_response(prompt)
-        checked_response = self.check_response_format(response, SummarizeTitle)
-        return json.loads(checked_response)
+        checked_response = self.check_response_format(response)
+        return checked_response
     
-    def check_response_format(self, response: str, response_format_class : Type[BaseModel]) -> BaseModel:
+    def check_response_format(self, response: str) -> BaseModel:
         for i in range(self.max_retry_count):
             if (response.startswith("```json")):
                 response = response.replace("```json", "").replace("```", "").strip()
             try:
                 response_loaded = json.loads(response)
-                try:
-                    instance = response_format_class.model_validate(response_loaded)
+                # Check if all keys are present in the response
+                is_valid = all(key in response_loaded for key in summarizeTitleExample.model_dump().keys())
+                if is_valid:
+                    # Validate the response against the example
+                    instance = SummarizeTitle.model_validate(response_loaded)
                     return instance
-                except ValidationError as e:
-                    logger.error(f"Validation error: {e}")
-                    pass
             except json.JSONDecodeError:
                 logger.error(f"JSON decode error: {response}")
                 pass
-            prompt = self.retry_prompt.render(response_format=response_format_class)
+            prompt = self.retry_prompt.render(summarizeTitleExample)
             response = self.llm_client.generate_response(prompt)
         logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
      

@@ -36,7 +36,7 @@ class CreateConversationResponse(BaseModel):
 
 class GetConversationMessagesResponseItem(BaseModel):
     user: str
-    references: list[Reference]
+    reference: list[Reference]
     assistant: str
     time: str
     

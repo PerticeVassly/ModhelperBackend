@@ -16,9 +16,9 @@ async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo
     extractedInfo = extractor.extract(input_text=questionRequest.question)
     # TODO: try deploy a small llm to do this to save time ?
     if extractedInfo.is_mc: 
-        return handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
+        return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
     else:
-        return __handle_non_rag_question(questionRequest=questionRequest, userInfo=UserInfo) 
+        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=UserInfo) 
         
 async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
     # check if the user do has this conversation
@@ -47,7 +47,7 @@ async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo 
         references=[]
     )
 
-async def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
+async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
      # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
@@ -66,7 +66,7 @@ async def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserI
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
         user_message=questionRequest.question,
-        reference=context,
+        reference=[item.model_dump() for item in context],
         assistant_message=response,
         timestamp=datetime.now()
     )
@@ -108,7 +108,7 @@ def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo) -
         result.append(
             GetConversationMessagesResponseItem(
                 user=msg.user_message,
-                references=msg.reference,
+                reference=msg.reference,
                 assistant=msg.assistant_message,
                 time=msg.timestamp.strftime("%Y-%m-%d %H:%M:%S")
             )
@@ -152,10 +152,11 @@ def __retrieve(extractedInfo : dict, text : str) -> list[Reference]:
     # TODO now just retrieve the user direct input
     searched_entries = vectorDB.search(query=text.strip(), top_k=3)
     for entry in searched_entries:
+        print(entry)
         context.append(
             Reference(
-                description=entry["description"],
-                content=entry["content"]
+                description=entry["id"],
+                content=entry["text"]
             )
         )
     return context

@@ -1,5 +1,5 @@
 from model import *
-from service import handle_register, handle_login, handle_guest_login
+from service import *
 from fastapi import APIRouter, Request
 
 router = APIRouter()
