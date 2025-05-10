@@ -1,4 +1,3 @@
-from .auth_models import *
-from .question_models import *
+from .rest_models import *
 from .db_models import *
-from .keywords import *
+from .domain_models import *

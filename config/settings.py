@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM : str = Field(default="HS256", env="JWT_ALGORITHM")
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES : str = Field(default="3600000", env ="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
 
+    # 后端参数业务参数配置
+    MAX_SUMMARY_LENGTH: int = Field(default=5, env="MAX_SUMMARY_LENGTH")
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

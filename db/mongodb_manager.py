@@ -93,8 +93,8 @@ class MessagesCollection:
             logger.error(f"Error inserting message: {e}")
             return False
 
-usersCollection = UsersCollection()
-conversationsCollection = ConversationsCollection()
-messagesCollection = MessagesCollection()
+usersRepository = UsersCollection()
+conversationsRepository = ConversationsCollection()
+messagesRepository = MessagesCollection()
 
 

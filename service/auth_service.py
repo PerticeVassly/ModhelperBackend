@@ -1,7 +1,7 @@
 from fastapi import HTTPException, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from db import usersCollection
-from model import RegisterRequest, LoginRequest, UserInfo
+from db import usersRepository
+from model import *
 import bcrypt
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -13,41 +13,49 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 logger = logging.getLogger("service")
 
-def handle_register(request: RegisterRequest):
+def handle_register(request: RegisterRequest) -> RegisterResponse:
     # check if the user already exists
-    if usersCollection.find_one_by_username(request.username):
+    if usersRepository.find_one_by_username(request.username):
         raise HTTPException(status_code=400, detail="Username already exists")
     # register the user
     hashed_password = __hash_password(request.password)
-    usersCollection.insert_one(user=UserInfo(
+    usersRepository.insert_one(user=UserInfo(
         username=request.username,
         email=request.email,
         password=hashed_password
     ))
     logger.info(f"User {request.username} registered successfully")
-    return {"User registered"}
+    return RegisterResponse(
+        message="User registered successfully"
+    )
 
-def handle_login(request: LoginRequest):
+def handle_login(request: LoginRequest) -> LoginResponse:
     # login
-    db_user = usersCollection.find_one_by_username(request.username)
+    db_user = usersRepository.find_one_by_username(request.username)
     if not db_user or not verify_password(request.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     # generate token
     token = __create_access_token(data={"sub": str(db_user.id)})
     logger.info(f"User {request.username} logged in successfully")
-    return {"access_token": token, "token_type": "bearer"}
+    return LoginResponse(
+        access_token=token,
+        token_type="bearer",
+    )
 
-def handle_guest_login():
+def handle_guest_login() -> LoginResponse:
     # create a tmp user
     tmp_user = UserInfo(
         username="",
         email="guest@gmail.com",
         password= __hash_password("guest")
     )
-    result = usersCollection.insert_one(user=tmp_user)
+    result = usersRepository.insert_one(user=tmp_user)
     token = __create_access_token(data={"sub": str(result.inserted_id)})
     logger.info(f"Guest user {tmp_user.username} logged in successfully")
-    return {"access_token": token, "token_type": "bearer"}
+    return LoginResponse(
+        access_token=token,
+        token_type="bearer",
+    )
 
 def __hash_password(password: str) -> str:
   return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
@@ -55,7 +63,7 @@ def __hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
   return bcrypt.checkpw(password.encode(), hashed.encode())
 
-def __create_access_token(data: dict, expires_delta: timedelta | None = None):
+def __create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     expire = datetime.now() + (expires_delta or timedelta(minutes=float(settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)))
     to_encode.update({"exp": expire})
@@ -67,9 +75,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInfo:
         logger.info("Invalid token")
         raise HTTPException(status_code=401, detail="Invalid token")
     user_id = ObjectId(payload["sub"]) 
-    return usersCollection.find_one(user_id=user_id) or HTTPException(status_code=404, detail="User not found")
+    return usersRepository.find_one(user_id=user_id) or HTTPException(status_code=404, detail="User not found")
 
-def verify_token(token: str):
+def verify_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         return payload

@@ -10,7 +10,7 @@ from .base import (
 from .sqlite3_manager import relationDB
 from .chroma_manager import vectorDB
 from .neo4j_manager import graphDB
-from .mongodb_manager import usersCollection, conversationsCollection, messagesCollection
+from .mongodb_manager import usersRepository, conversationsRepository, messagesRepository
 from config.logging_config import setup_logging
 
 __all__ = [
@@ -21,9 +21,9 @@ __all__ = [
     "ModPlatform",
     "ModRelation",
     "ModRelationType",
-    "usersCollection",
-    "conversationsCollection",
-    "messagesCollection",
+    "usersRepository",
+    "conversationsRepository",
+    "messagesRepository",
 ]
 
 setup_logging()

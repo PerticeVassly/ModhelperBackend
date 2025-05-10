@@ -1,6 +1,6 @@
 from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM, SummarizeLLM
-from db import conversationsCollection, messagesCollection, vectorDB
-from model import CreateConversationRequest, MinecraftModKeywords, QuestionRequest, UserInfo, ConversationInfo, MessageInfo
+from db import conversationsRepository, messagesRepository, vectorDB
+from model import *
 from bson import ObjectId
 from datetime import datetime
 from config import settings
@@ -10,15 +10,25 @@ import asyncio
 
 logger = logging.getLogger("service")
 
-async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo):
+async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
+    extractor = ExtractorLLM(
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+    extractedInfo = extractor.extract(input=questionRequest.question)
+    # TODO: try deploy a small llm to do this to save time ?
+    if extractedInfo.is_mc: 
+        return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
+    else:
+        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo) 
+        
+async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
     # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
-    history = messagesCollection.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
+    messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # chat with llm
     non_rag = NonRAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=history))
-    response = non_rag.generate_response(question=questionRequest.question)
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
+    response = non_rag.chat(question=questionRequest.question)
     # save message
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
@@ -27,149 +37,129 @@ async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo
         assistant_message=response,
         timestamp=datetime.now()
     )
-    messagesCollection.insert_one(message=new_message)
+    messagesRepository.insert_one(message=new_message)
     # async summarize
-    history.append(new_message)
-    if not len(history) > 3:
-        asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
-    return {
-        "response": response,
-        "reference": []
-    }
+    messages.append(new_message)
+    if not len(messages) > 5:
+        asyncio.create_task(__summarize(messages=messages, concersation_id=questionRequest.conversation_id))
+    return QuestionResponse(
+        response=response,
+        reference=[]
+    )
 
-async def handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo):
+async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
      # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
-    history = messagesCollection.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
-    # classify the question topic
-    topic_name = __classify(questionRequest.question)
-    # extract keypoints {key : value}
-    keypoints = __extract(
-        text=questionRequest.question,
-        topic_name=topic_name)
-    # retrieve context
+    messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
+    # retrieve context based on extracted info
     context = __retrieve(
-        keypoints=keypoints, 
-        topic_name=topic_name, 
+        extractedInfo=extractedInfo,
         text=questionRequest.question)
     # chat with llm
     rag = RAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=history))
-    response = rag.generate_response(
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
+    response = rag.chat(
         question=questionRequest.question,
-        context=context,
-        topic_name=topic_name)
+        context=context)
     # save message
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
         user_message=questionRequest.question,
-        reference=context,
+        reference=[item.model_dump() for item in context],
         assistant_message=response,
         timestamp=datetime.now()
     )
-    messagesCollection.insert_one(message=new_message)
+    messagesRepository.insert_one(message=new_message)
     # async summarize
-    history.append(new_message)
-    if not len(history) > 3:
-        asyncio.create_task(__summarize(messages=history, concersation_id=questionRequest.conversation_id))
-    return {
-        "response": response,
-        "reference": context
-    }
-
-def handle_create_conversation(request: CreateConversationRequest, userInfo : UserInfo):
-    result = conversationsCollection.insert_one(conversation=ConversationInfo(
+    messages.append(new_message)
+    if not len(messages) > 3:
+        asyncio.create_task(__summarize(messages=messages, concersation_id=questionRequest.conversation_id))
+    return  QuestionResponse(
+        response=response,
+        reference=context
+    )
+def handle_create_conversation(request: CreateConversationRequest, userInfo : UserInfo) -> CreateConversationResponse:
+    result = conversationsRepository.insert_one(conversation=ConversationInfo(
         user_id=ObjectId(userInfo.id),
         title=request.title,
         created_at=datetime.now()
     ))
     logger.info(f"Conversation created with id: {result.inserted_id}")
-    return {"id" : str(result.inserted_id), "title" : request.title}
+    return CreateConversationResponse(
+        id=str(result.inserted_id),
+        title=request.title
+    )
 
 def handle_delete_conversation(conversation_id : str, userInfo: UserInfo):
     # check if the user do has this conversation
     __check_do_have_conversation(userInfo, conversation_id)
     # delete conversation
-    conversationsCollection.delete_one(ObjectId(conversation_id))
-    messagesCollection.delete_many_by_conversation_id(conversation_id=ObjectId(conversation_id))
+    conversationsRepository.delete_one(ObjectId(conversation_id))
+    messagesRepository.delete_many_by_conversation_id(conversation_id=ObjectId(conversation_id))
 
-def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo):
+def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo) -> list[GetConversationMessagesResponseItem]:
     # check if the user do has this conversation
     __check_do_have_conversation(userInfo, conversation_id)
     # fetch history
-    msgs = messagesCollection.find_all_by_conversation_id(conversation_id=ObjectId(conversation_id))
+    msgs = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(conversation_id))
     result = []
     for msg in msgs:
-        result.append({
-            "user": msg.user_message,
-            "reference": msg.reference,
-            "assistant": msg.assistant_message,
-            "time": msg.timestamp
-        })
+        result.append(
+            GetConversationMessagesResponseItem(
+                user=msg.user_message,
+                reference=msg.reference,
+                assistant=msg.assistant_message,
+                time=msg.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            )
+        )
     return result
 
-def handle_get_all_conversations(userInfo: UserInfo):
-    conversations = conversationsCollection.find_all_by_user_id(user_id=ObjectId(userInfo.id))
+def handle_get_all_conversations(userInfo: UserInfo) -> list[GetAllConversationsResponseItem]:
+    conversations = conversationsRepository.find_all_by_user_id(user_id=ObjectId(userInfo.id))
     result = []
     for conv in conversations:
-        result.append({
-            "id": str(conv.id),
-            "title": conv.title,
-        })
+        result.append(
+            GetAllConversationsResponseItem(
+                id=str(conv.id),
+                title=conv.title
+            )
+        )
     return result
 
-async def __summarize(messages : list[MessageInfo], concersation_id : str):
+async def __summarize(messages : list[MessageInfo], concersation_id : str) -> None:
     # chat with llm 
-    conversation = conversationsCollection.find_one(ObjectId(concersation_id))
+    conversation = conversationsRepository.find_one(ObjectId(concersation_id))
     llm = SummarizeLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
-    json_response = llm.summarize(messages=messages, old_name=conversation.title)
-    new_title = json_response["title"][0]
+    summarizeTitle = llm.summarize(messages=messages, old_name=conversation.title)
+    new_title = summarizeTitle.title
     # save new title
-    conversationsCollection.update_ones_title(
+    conversationsRepository.update_ones_title(
         conversation_id=ObjectId(concersation_id),
         new_title=new_title
     )        
 
-
-def __classify(text : str) -> str: 
-  # TODO wait for more type of mod
-  return "Minecraft Mod"
-
-def __get_keywords(topic_name : str) -> list:
-    if topic_name == "Minecraft Mod":
-        return MinecraftModKeywords
-    else:
-        raise ValueError(f"Unsupported topic name: {topic_name}")
-        return []
-
-def __extract(text : str, topic_name : str) -> list[dict]:
-    keywords = __get_keywords(topic_name)
-    # extractor = ExtractorLLM(
-    #     llm_client = LLMClient(api_key=settings.LLM_API_KEY))
-    # keypoints = extractor.extract(text, keywords, topic_name)
-    # TODO for efficiency now only return {key : []}
-    keypoints = {key: [] for key in keywords }
-    return keypoints
-
 def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bool:
     # check if the user do has this conversation
-    conversation = conversationsCollection.find_one(ObjectId(conversation_id))
+    conversation = conversationsRepository.find_one(ObjectId(conversation_id))
     if not conversation or conversation.user_id != userInfo.id:
         raise HTTPException(status_code=400, detail="Conversation not found or user not matching")
-        return False
     return True
 
-def __retrieve(keypoints : dict, text : str, topic_name) -> list[dict[str, str]]:
+def __retrieve(extractedInfo : dict, text : str) -> list[Reference]:
     context = [] # { description : str, content : str }
     # TODO now just retrieve the user direct input
     searched_entries = vectorDB.search(query=text.strip(), top_k=3)
     for entry in searched_entries:
-        context.append({
-            "description": entry["id"],
-            "content": entry["text"],
-        })
+        print(entry)
+        context.append(
+            Reference(
+                description=entry["id"],
+                content=entry["text"]
+            )
+        )
     return context
+
 
 
