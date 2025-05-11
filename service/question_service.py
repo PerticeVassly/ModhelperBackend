@@ -152,11 +152,11 @@ def __retrieve(extractedInfo : dict, text : str) -> list[Reference]:
     # TODO now just retrieve the user direct input
     searched_entries = vectorDB.search(query=text.strip(), top_k=3)
     for entry in searched_entries:
-        print(entry)
+        logger.info(f"Found entry: {entry}")
         context.append(
             Reference(
                 description=entry["id"],
-                content=entry["text"]
+                content=entry["document"],
             )
         )
     return context
