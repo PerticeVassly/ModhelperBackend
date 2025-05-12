@@ -1,6 +1,6 @@
 import chromadb
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from .base import BaseVectorDB
 from config import settings
 from pathlib import Path
@@ -55,13 +55,21 @@ class ChromaVectorDB(BaseVectorDB):
                 logger.error(f"Error adding document {article_name}: {e}")
                 return False
         
-    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, required_mod_names : Optional[list[str]], required_article_type : Optional[str], top_k: int = 5) -> List[Dict[str, Any]]:
         query_embedding = gen_embedding(query)
 
         query_params = {
             "query_embeddings": [query_embedding],
             "n_results": top_k,
         }
+        where = {}
+        if required_mod_names and len(required_mod_names) != 0:
+            where["mod_name"] = {"$in": required_mod_names}
+        # TODO chromadb竟然不支持多where查询...
+        # if required_article_type:
+        #     where["type"] = required_article_type
+        if where:
+            query_params["where"] = where
         results = self.collection.query(**query_params)    
         return [
             {"id": id, "document": doc, "metadata": meta, "score": score}

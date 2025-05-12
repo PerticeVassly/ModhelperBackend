@@ -1,5 +1,5 @@
 from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM, SummarizeLLM
-from db import conversationsRepository, messagesRepository, vectorDB
+from db import conversationsRepository, messagesRepository, vectorDB, all_mod_names
 from model import *
 from bson import ObjectId
 from datetime import datetime
@@ -7,6 +7,7 @@ from config import settings
 from fastapi import HTTPException
 import logging
 import asyncio
+from rapidfuzz import fuzz, process
 
 logger = logging.getLogger("service")
 
@@ -147,10 +148,29 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
         raise HTTPException(status_code=400, detail="Conversation not found or user not matching")
     return True
 
-def __retrieve(extractedInfo : dict, text : str) -> list[Reference]:
+def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
     context = [] # { description : str, content : str }
     # TODO now just retrieve the user direct input
-    searched_entries = vectorDB.search(query=text.strip(), top_k=3)
+
+    # use extractedInfo to filter
+    mod_names = extractedInfo.extraction_fields.mod_name
+    matched_names = []
+    for name in mod_names:
+        matches = __fuzzy_match(query = name, candidates=all_mod_names, threshold = 80)
+        if matches:
+            matched_names.append(matches[0])
+
+    logger.info(f"Matched mod names: {matched_names} in {all_mod_names}")
+    # if len == 0 required_mod_names = None
+    required_mod_names = matched_names;
+    required_article_type = None
+    if extractedInfo.intention == intentionEnum.basic_info:
+        required_article_type = "introduction"
+    elif extractedInfo.intention == intentionEnum.gameplay_guide:
+        required_article_type = "guide"
+
+    # search
+    searched_entries = vectorDB.search(query=text.strip(), required_article_type=required_article_type, required_mod_names=required_mod_names, top_k=3)
     for entry in searched_entries:
         logger.info(f"Found entry: {entry}")
         context.append(
@@ -161,5 +181,7 @@ def __retrieve(extractedInfo : dict, text : str) -> list[Reference]:
         )
     return context
 
-
+def __fuzzy_match(query: str, candidates: list[str], threshold: int) -> list[str]:
+    matches = process.extract(query, candidates, scorer=fuzz.partial_ratio)
+    return [match for match, score, _ in matches if score >= threshold]
 

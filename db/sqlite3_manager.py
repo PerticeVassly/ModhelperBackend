@@ -57,6 +57,13 @@ class SQLiteMetadataDB(BaseMetadataDB):
             )
         logger.warning(f"Mod {name} not found.")
         return None
+
+    def get_all_mod_names(self) -> list[str]:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT name FROM mod_info")
+        mod_names = [row[0] for row in cursor.fetchall()]
+        logger.info(f"Retrieved all mod names: {mod_names}")
+        return mod_names
     
     def search(self, keyword: str):
         cursor = self.conn.cursor()
@@ -76,6 +83,5 @@ class SQLiteMetadataDB(BaseMetadataDB):
     def __del__(self):
         self.conn.close()
         logger.info("SQLite connection closed.")
-
 
 relationDB = SQLiteMetadataDB()
