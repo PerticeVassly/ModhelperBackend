@@ -12,6 +12,7 @@ from .chroma_manager import vectorDB
 from .neo4j_manager import graphDB
 from .mongodb_manager import usersRepository, conversationsRepository, messagesRepository
 from config.logging_config import setup_logging
+from .global_vars import all_mod_names
 
 __all__ = [
     "relationDB",
@@ -24,6 +25,7 @@ __all__ = [
     "usersRepository",
     "conversationsRepository",
     "messagesRepository",
+    "all_mod_names",
 ]
 
 setup_logging()

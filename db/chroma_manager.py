@@ -1,6 +1,6 @@
 import chromadb
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from .base import BaseVectorDB
 from config import settings
 from pathlib import Path
@@ -19,43 +19,64 @@ class ChromaVectorDB(BaseVectorDB):
         )
         
         logger.info(f"Initialized ChromaDB at {db_path}, collection: {settings.CHROMA_COLLECTION}")
-    
-    def add(self, name: str, text: str) -> bool:
-        chunks = split_text(text)
-        embeddings = []
-        metadatas = []
-        
-        for i, chunk in enumerate(chunks):
-            embedding = gen_embedding(f"{name}: {chunk}")
-            if embedding is not None:
-                embeddings.append(embedding)
-                metadatas.append({"chunk_id": i, "name": name})
-        
-        if embeddings:
+
+    def add(self, article_name : str, article_type : str, url : str, content : str, mod_name : str) -> bool:
+        # check if the article has been added
+        existing_docs = self.collection.query(
+            query_embeddings=[gen_embedding(article_name)],
+            n_results=1,
+            where={
+                "article_name": article_name
+            }
+        )
+        if existing_docs["documents"][0]:
+            logger.info(f"Document {article_name} already exists in the database.")
+            return
+        summary = article_name # TODO other way to generate summary
+        chunks = split_text(content)
+        embedded_chunks = [gen_embedding(summary + chunk) for chunk in chunks]    
+        if embedded_chunks:
             try:
                 self.collection.add(
-                    ids=[f"{name}_{i}" for i in range(len(embeddings))],
                     documents=chunks,
-                    embeddings=embeddings,
-                    metadatas=metadatas
+                    metadatas=[{
+                        "article_name": article_name,
+                        "url": url,
+                        "type": article_type,
+                        "mod_name": mod_name,
+                        "chunk_index": i,
+                        "total_chunk": len(chunks)
+                    } for i in range(len(chunks))],
+                    ids=[f"{article_name}_{i}" for i in range(len(chunks))],
+                    embeddings=embedded_chunks
                 )
-                logger.info(f"Document {name} added successfully.")
                 return True
             except Exception as e:
-                logger.error(f"Error adding document {name}: {e}")
+                logger.error(f"Error adding document {article_name}: {e}")
                 return False
         
-    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, required_mod_names : Optional[list[str]], required_article_type : Optional[str], top_k: int = 5) -> List[Dict[str, Any]]:
         query_embedding = gen_embedding(query)
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k
-        )     
+
+        query_params = {
+            "query_embeddings": [query_embedding],
+            "n_results": top_k,
+        }
+        where = {}
+        if required_mod_names and len(required_mod_names) != 0:
+            where["mod_name"] = {"$in": required_mod_names}
+        # TODO chromadb竟然不支持多where查询...
+        # if required_article_type:
+        #     where["type"] = required_article_type
+        if where:
+            query_params["where"] = where
+        results = self.collection.query(**query_params)    
         return [
-            {"id": id, "text": doc, "score": score}
-            for id, doc, score in zip(
+            {"id": id, "document": doc, "metadata": meta, "score": score}
+            for id, doc, meta, score in zip(
                 results["ids"][0], 
                 results["documents"][0], 
+                results["metadatas"][0], 
                 results["distances"][0]
             )
         ]

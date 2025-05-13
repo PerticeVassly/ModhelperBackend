@@ -1,49 +1,89 @@
 import json
 from db import *
 import sys
+import os
 
-tag = ""
-
-def load_guide():
-    with open(f"./data/raw/{tag}/guide_page.json") as file:
-        file = json.load(file)
+# def load_guide():
+#     with open(f"./data/raw/{tag}/guide_page.json") as file:
+#         file = json.load(file)
         
-        for mod in file:
-            mod_name = mod["mod_name"]
+#         for mod in file:
+#             mod_name = mod["mod_name"]
             
-            for guide in mod["guide_pages"]:
-                guide_name = f"{mod_name} {guide['guide_name']}"
-                guide_content = f"{guide_name}: {guide['guide_body']}"
+#             for guide in mod["guide_pages"]:
+#                 guide_name = f"{mod_name} {guide['guide_name']}"
+#                 guide_content = f"{guide_name}: {guide['guide_body']}"
 
-                vectorDB.add(guide_name, guide_content)
+#                 vectorDB.add(guide_name, guide_content)
         
 
-def load_detail():
-    with open(f"./data/raw/{tag}/detail_page.json") as file:
-        file = json.load(file)
+# def load_detail():
+#     with open(f"./data/raw/{tag}/detail_page.json") as file:
+#         file = json.load(file)
         
-        for mod in file:
-            mod_name = mod["mod_name"]
-            mod_desc = mod["detail_page"]["mod_description"]
-            sup_plat = [str2platform(s) for s in mod["detail_page"]["support_platforms"]]
-            dep_meth = mod["detail_page"]["run_methods"]
-            mod_tags = mod["detail_page"]["mod_tags"]
+#         for mod in file:
+#             mod_name = mod["mod_name"]
+#             mod_desc = mod["detail_page"]["mod_description"]
+#             sup_plat = [str2platform(s) for s in mod["detail_page"]["support_platforms"]]
+#             dep_meth = mod["detail_page"]["run_methods"]
+#             mod_tags = mod["detail_page"]["mod_tags"]
 
-            relationDB.add(ModMetadata(
-                mod_name,
-                mod_tags,
-                mod_desc,
-                sup_plat[0],
-                None
-            ))
+#             relationDB.add(ModMetadata(
+#                 mod_name,
+#                 mod_tags,
+#                 mod_desc,
+#                 sup_plat[0],
+#                 None
+#             ))
             
-            for front in dep_meth:
-                graphDB.add(ModRelation(
-                    mod_name,
-                    front,
-                    ModRelationType.dependency
+#             for front in dep_meth:
+#                 graphDB.add(ModRelation(
+#                     mod_name,
+#                     front,
+#                     ModRelationType.dependency
+#                 ))
+def load_mods():
+    # load all the json file in data/raw/
+
+    # and add them to the database
+    for file in os.listdir("./data/raw/"):
+        if file.endswith(".json"):
+            with open(f"./data/raw/{file}") as f:
+                data = json.load(f)
+                vectorDB.add(
+                    article_name= data["mod_name"] + "介绍",
+                    article_type= "introduction",
+                    url = data["detail_page_url"],
+                    content= data["introduction"],
+                    mod_name= data["mod_name"],
+                )
+
+                for guide in data["guides"]:
+                    vectorDB.add(
+                        article_name= data["mod_name"] + guide["guide_name"],
+                        article_type= "guide",
+                        url = guide["guide_page_url"],
+                        content= guide["content"],
+                        mod_name= data["mod_name"],
+                    )
+
+                # TODO more precise
+                relationDB.add(ModMetadata(
+                    name= data["mod_name"],
+                    tags= data["tags"],
+                    description= data["introduction"],
+                    support_platform=str2platform(data["support_platforms"][0]),
+                    download_url= None,
                 ))
 
+                # TODO more precise
+                for front in data["run_methods"]:
+                    graphDB.add(ModRelation(
+                        source_mod= data["mod_name"],
+                        target_mod= front,
+                        relationship_type= ModRelationType.dependency
+                    ))
+                              
 def str2platform(a: str) -> ModPlatform:
     a = a.strip().lower()
     if a.startswith("java"):
@@ -54,9 +94,4 @@ def str2platform(a: str) -> ModPlatform:
         return ModPlatform.CROSS
 
 if __name__ == "__main__":    
-    if len(sys.argv) > 1:
-        tag = sys.argv[1]
-    else:
-        tag = "base"
-    load_guide()
-    load_detail()
+    load_mods()
