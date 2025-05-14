@@ -185,3 +185,4 @@ def __fuzzy_match(query: str, candidates: list[str], threshold: int) -> list[str
     matches = process.extract(query, candidates, scorer=fuzz.partial_ratio)
     return [match for match, score, _ in matches if score >= threshold]
 
+

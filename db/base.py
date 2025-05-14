@@ -17,16 +17,9 @@ class ModMetadata:
     download_url: Optional[str]
     
 
-class ModRelationType(Enum):
-    dependency = "depends-on"
-    interaction = "interacts-with"
-    confliction = "conflicts-with"
 
-@dataclass
-class ModRelation:
-    source_mod: str
-    target_mod: str
-    relationship_type: ModRelationType
+
+
 
 class BaseMetadataDB(ABC):
     @abstractclassmethod

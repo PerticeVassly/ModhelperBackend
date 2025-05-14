@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from config import settings
-from model import UserInfo, ConversationInfo, MessageInfo
+from model import UserInfo, ConversationInfo, MessageInfo, Mod
 from bson import ObjectId
 import logging
 from pymongo.results import InsertOneResult
@@ -92,9 +92,66 @@ class MessagesCollection:
         except Exception as e:
             logger.error(f"Error inserting message: {e}")
             return False
+        
+class MetaInfoCollection:
+    def __init__(self):
+        self.collection = db["metaInfos"]
+    
+    def insert_one(self, mod : Mod, overwrite=False) -> bool:
+        query = {"name" : mod.mod_name}
+        existing = self.collection.find_one(query)
+        if existing:
+            if not overwrite:
+                return False
+            else:
+                self.collection.replace_one(query, mod.model_dump())
+                return True
+        else:
+            self.collection.insert_one(mod.model_dump())
+
+    def find_all_mod_names(self):
+        mods = self.collection.find({}, {"mod_name": 1, "_id": 0})
+        return [mod["mod_name"] for mod in mods if "mod_name" in mod]
+    
+    def find_all_item_names(self):
+        mods = self.collection.find({}, {"items.name": 1, "_id": 0})
+        item_names = []
+        for mod in mods:
+            for item in mod.get("items", []):
+                if "name" in item:
+                    item_names.append(item["name"])
+        return item_names
+    
+    def find_all_biome_names(self):
+        mods = self.collection.find({}, {"biomes.name": 1, "_id": 0})
+        biome_names = []
+        for mod in mods:
+            for biome in mod.get("biomes", []):
+                if "name" in biome:
+                    biome_names.append(biome["name"])
+        return biome_names
+    
+    def find_all_entity_names(self):
+        mods = self.collection.find({}, {"entities.name": 1, "_id": 0})
+        entity_names = []
+        for mod in mods:
+            for entity in mod.get("entities", []):
+                if "name" in entity:
+                    entity_names.append(entity["name"])
+        return entity_names
+    
+    def find_all_structure_names(self):
+        mods = self.collection.find({}, {"structures.name": 1, "_id": 0})
+        structure_names = []
+        for mod in mods:
+            for structure in mod.get("structures", []):
+                if "name" in structure:
+                    structure_names.append(structure["name"])
+        return structure_names
 
 usersRepository = UsersCollection()
 conversationsRepository = ConversationsCollection()
 messagesRepository = MessagesCollection()
+metaInfosRepository = MetaInfoCollection()
 
 
