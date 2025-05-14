@@ -2,6 +2,7 @@ import json
 from db import *
 import sys
 import os
+from model import *
 
 # def load_guide():
 #     with open(f"./data/raw/{tag}/guide_page.json") as file:
@@ -51,32 +52,28 @@ def load_mods():
             with open(f"./data/raw/{file}") as f:
                 data = json.load(f)
                 vectorDB.add(
-                    article_name= data["mod_name"] + "介绍",
-                    article_type= "introduction",
-                    url = data["detail_page_url"],
-                    content= data["introduction"],
-                    mod_name= data["mod_name"],
+                    raw_text= data["introduction"],
+                    metadata= DocumentMetadata(
+                        document_name= data["mod_name"] + " introduction",
+                        url= data["detail_page_url"],
+                        type= DocumentEnum.introduction,
+                        mod_name= data["mod_name"],
+                    )
                 )
 
                 for guide in data["guides"]:
                     vectorDB.add(
-                        article_name= data["mod_name"] + guide["guide_name"],
-                        article_type= "guide",
-                        url = guide["guide_page_url"],
-                        content= guide["content"],
-                        mod_name= data["mod_name"],
+                        raw_text= guide["guide_body"],
+                        metadata= DocumentMetadata(
+                            document_name= guide["guide_name"],
+                            url= guide["guide_url"],
+                            type= DocumentEnum.guide,
+                            mod_name= data["mod_name"],
+                        )
                     )
-
-                # TODO more precise
-                relationDB.add(ModMetadata(
-                    name= data["mod_name"],
-                    tags= data["tags"],
-                    description= data["introduction"],
-                    support_platform=str2platform(data["support_platforms"][0]),
-                    download_url= None,
-                ))
-
-                # TODO more precise
+                    
+                metaInfosRepository.insert_one(Mod.model_validate(data))
+                    
                 for front in data["run_methods"]:
                     graphDB.add(ModRelation(
                         source_mod= data["mod_name"],
