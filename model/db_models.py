@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from typing import Optional
 from bson import ObjectId
 from datetime import datetime
-from types import Enum
+from enum import Enum
 
 class UserInfo(BaseModel):
     id : Optional[ObjectId] = Field(default=None, alias="_id")

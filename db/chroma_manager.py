@@ -1,7 +1,6 @@
 import chromadb
 import logging
 from typing import List, Dict, Any, Optional
-from .base import BaseVectorDB
 from config import settings
 from pathlib import Path
 from .embedding import gen_embedding, split_text

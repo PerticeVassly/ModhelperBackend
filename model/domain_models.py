@@ -27,11 +27,11 @@ class intrestedEntityEnum(str, Enum):
 
 # extractedInfo BaseModel generate by extractor llm
 class ExtractedFields(BaseModel):
-    mods = []
-    items = []
-    entities = []
-    biomes = []
-    structures = []
+    mods : list[str] = []
+    items : list[str] = []
+    entities : list[str] = []
+    biomes : list[str] = []
+    structures : list[str] = []
 
 class ExtractedInfo(BaseModel):
     is_mc: Literal[0, 1]

@@ -153,7 +153,7 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
     # TODO now just retrieve the user direct input
 
     # use extractedInfo to filter
-    mod_names = extractedInfo.extraction_fields.mod_name
+    mod_names = extractedInfo.extraction_fields.mods
     matched_names = []
     for name in mod_names:
         matches = __fuzzy_match(query = name, candidates=all_mod_names, threshold = 80)
@@ -175,7 +175,7 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
         logger.info(f"Found entry: {entry}")
         context.append(
             Reference(
-                description=entry["id"],
+                description=entry["metadata"]["document_name"],
                 content=entry["document"],
             )
         )
