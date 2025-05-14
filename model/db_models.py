@@ -81,13 +81,13 @@ class DocumentEnum(str, Enum):
     other = "other"
 
 class DocumentMetadata(BaseModel):
-    id : Optional[str]
+    id : Optional[str] = None
     document_name: str
     url: str
     type: DocumentEnum
     mod_name: str
-    chunk_index: Optional[int]
-    total_chunks: Optional[int]
+    chunk_index: Optional[int] = None
+    total_chunks: Optional[int] = None
     
 class ModRelationType(Enum):
     dependency = "depends-on"

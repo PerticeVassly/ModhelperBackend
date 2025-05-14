@@ -38,6 +38,7 @@ class ChromaVectorDB:
         if embedded_chunks:
             try:
                 self.collection.add(
+                    ids = [metadata.mod_name + metadata.document_name + str(i) for i in range(len(chunks))],
                     documents=chunks,
                     embeddings=embedded_chunks,
                     metadatas=[DocumentMetadata(
@@ -50,6 +51,7 @@ class ChromaVectorDB:
                         total_chunks=len(chunks),
                     ).model_dump() for i in range(len(chunks))],
                 )
+                logger.info(f"Added document {metadata.document_name} to the database.")
                 return True
             except Exception as e:
                 logger.error(f"Error adding document {metadata.document_name}: {e}")

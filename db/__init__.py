@@ -10,7 +10,6 @@ from config.logging_config import setup_logging
 from .global_vars import *
 
 __all__ = [
-    "relationDB",
     "vectorDB",
     "graphDB",
     "usersRepository",

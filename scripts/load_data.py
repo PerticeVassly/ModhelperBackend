@@ -63,10 +63,10 @@ def load_mods():
 
                 for guide in data["guides"]:
                     vectorDB.add(
-                        raw_text= guide["guide_body"],
+                        raw_text= guide["content"],
                         metadata= DocumentMetadata(
                             document_name= guide["guide_name"],
-                            url= guide["guide_url"],
+                            url= guide["guide_page_url"],
                             type= DocumentEnum.guide,
                             mod_name= data["mod_name"],
                         )
