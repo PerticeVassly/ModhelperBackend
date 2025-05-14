@@ -9,9 +9,6 @@ class Reference(BaseModel):
     description: str
     content: str
 
-# document type which need vector compare
-
-
 # extracted user intention type from user input
 class intentionEnum(str, Enum):
     basic_info = "basic_info"

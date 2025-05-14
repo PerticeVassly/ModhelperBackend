@@ -7,7 +7,7 @@ from pathlib import Path
 
 logger = logging.getLogger("database")
 
-class SQLiteMetadataDB(BaseMetadataDB):
+class SQLiteMetadataDB:
     def __init__(self):
         db_path = Path(settings.SQLITE_DB_PATH)
         db_path.parent.mkdir(parents=True, exist_ok=True)

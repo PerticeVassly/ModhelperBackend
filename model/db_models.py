@@ -80,13 +80,26 @@ class DocumentEnum(str, Enum):
     generalItem = "generalItem"
     other = "other"
 
-@dataclass
-class ModRelation:
-    source_mod: str
-    target_mod: str
-    relationship_type: ModRelationType
-
+class DocumentMetadata(BaseModel):
+    id : Optional[str]
+    document_name: str
+    url: str
+    type: DocumentEnum
+    mod_name: str
+    chunk_index: Optional[int]
+    total_chunks: Optional[int]
+    
 class ModRelationType(Enum):
     dependency = "depends-on"
     interaction = "interacts-with"
     confliction = "conflicts-with"
+
+class ModRelation(BaseModel):
+    source_mod: str
+    target_mod: str
+    relationship_type: ModRelationType
+
+class ModPlatform(Enum):
+    JAVA = "java"
+    BEDROCK = "bedrock"
+    CROSS = "cross-platform"

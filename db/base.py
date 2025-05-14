@@ -1,51 +1,42 @@
 from abc import ABC, abstractclassmethod
 from typing import List, Dict, Optional, Any
-from dataclasses import dataclass
-from enum import Enum
-
-class ModPlatform(Enum):
-    JAVA = "java"
-    BEDROCK = "bedrock"
-    CROSS = "cross-platform"
+from model import *
     
-@dataclass
-class ModMetadata:
-    name: str
-    tags: List[str]
-    description: str
-    support_platform: ModPlatform
-    download_url: Optional[str]
+# @dataclass
+# class ModMetadata:
+#     name: str
+#     tags: List[str]
+#     description: str
+#     support_platform: ModPlatform
+#     download_url: Optional[str]
     
-
-
-
-
-
-class BaseMetadataDB(ABC):
-    @abstractclassmethod
-    def add(self, mod: ModMetadata) -> bool: ...
+# class BaseMetadataDB(ABC):
+#     @abstractclassmethod
+#     def add(self, mod: ModMetadata) -> bool: ...
     
-    @abstractclassmethod
-    def get(self, name: str) -> Optional[ModMetadata]: ...
+#     @abstractclassmethod
+#     def get(self, name: str) -> Optional[ModMetadata]: ...
     
-    @abstractclassmethod
-    def search(self, keyword: str) -> List[ModMetadata]: ...
+#     @abstractclassmethod
+#     def search(self, keyword: str) -> List[ModMetadata]: ...
 
-class BaseVectorDB(ABC):
-    @abstractclassmethod
-    def add(self, mod_name: str, text: str) -> bool: ...
-    
-    @abstractclassmethod
-    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]: ...
+# TODO tobe formated add other db
 
-class BaseGraphDB(ABC):
-    @abstractclassmethod
-    def add(self, relaton: ModRelation) -> bool: ...
+# class BaseVectorDB(ABC):
+#     @abstractclassmethod
+#     def add(self, mod_name: str, text: str) -> bool: ...
     
-    @abstractclassmethod
-    def search_related(self, mod_name: str) -> List[ModRelation]: ...
+#     @abstractclassmethod
+#     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]: ...
+
+# class BaseGraphDB(ABC):
+#     @abstractclassmethod
+#     def add(self, relaton: ModRelation) -> bool: ...
     
-    @abstractclassmethod
-    def check_conflict(self, mod_name1: str, mod_name2: str) -> bool: ...
+#     @abstractclassmethod
+#     def search_related(self, mod_name: str) -> List[ModRelation]: ...
+    
+#     @abstractclassmethod
+#     def check_conflict(self, mod_name1: str, mod_name2: str) -> bool: ...
 
 
