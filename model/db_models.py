@@ -34,7 +34,7 @@ class Guide(BaseModel):
     guide_name : str
     content : str
 
-class Boime(BaseModel):
+class Biome(BaseModel):
     classification : str
     name : str
     biome_url : str
@@ -70,7 +70,7 @@ class Mod(BaseModel):
     introduction : str
     guides : list[Guide] = []
     items : list[Item] = []
-    biomes : list[Boime] = []
+    biomes : list[Biome] = []
     entities : list[Entity] = []
     structures : list[Structure] = []
 
@@ -109,4 +109,4 @@ class Entry(BaseModel):
     document: str
     metadata: DocumentMetadata
     distance: float
-    score = float
+    score : float
