@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from config import settings
 from pathlib import Path
 from .embedding import gen_embedding, split_text
-from model import DocumentMetadata
+from model import DocumentMetadata, Entry
 
 logger = logging.getLogger("database")
 
@@ -57,7 +57,7 @@ class ChromaVectorDB:
                 logger.error(f"Error adding document {metadata.document_name}: {e}")
                 return False
         
-    def search(self, query: str, required_mod_names : Optional[list[str]], required_article_type : Optional[str], top_k: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, required_mod_names : Optional[list[str]], required_article_type : Optional[str], top_k: int = 5) -> list[Entry]:
         query_embedding = gen_embedding(query)
 
         query_params = {
@@ -74,7 +74,12 @@ class ChromaVectorDB:
             query_params["where"] = where
         results = self.collection.query(**query_params)    
         return [
-            {"id": id, "document": doc, "metadata": meta, "score": score}
+            Entry(
+                id=id,
+                document=doc,
+                metadata=meta,
+                distance=score
+            )
             for id, doc, meta, score in zip(
                 results["ids"][0], 
                 results["documents"][0], 

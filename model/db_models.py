@@ -103,3 +103,9 @@ class ModPlatform(Enum):
     JAVA = "java"
     BEDROCK = "bedrock"
     CROSS = "cross-platform"
+
+class Entry(BaseModel):
+    id: str
+    document: str
+    metadata: DocumentMetadata
+    distance: float

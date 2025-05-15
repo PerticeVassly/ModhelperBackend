@@ -42,4 +42,6 @@ class ExtractedInfo(BaseModel):
 class SummarizeTitle(BaseModel):
     title: str
 
+
+
     

@@ -152,25 +152,30 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
     context = [] # { description : str, content : str }
     # TODO now just retrieve the user direct input
 
-    # use extractedInfo to filter
-    mod_names = extractedInfo.extraction_fields.mods
-    matched_names = []
-    for name in mod_names:
-        matches = __fuzzy_match(query = name, candidates=all_mod_names, threshold = 80)
-        if matches:
-            matched_names.append(matches[0])
-
-    logger.info(f"Matched mod names: {matched_names} in {all_mod_names}")
-    # if len == 0 required_mod_names = None
-    required_mod_names = matched_names;
-    required_article_type = None
-    if extractedInfo.intention == intentionEnum.basic_info:
-        required_article_type = "introduction"
-    elif extractedInfo.intention == intentionEnum.gameplay_guide:
-        required_article_type = "guide"
+    # 只有不为null的mod_name才会被使用
+    std_mod_names = [
+        match for mod_name in extractedInfo.extraction_fields.mods
+        if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None
+    ]
+    std_item_names = [
+        match for item_name in extractedInfo.extraction_fields.items
+        if (match := __fuzzy_match(query=item_name, candidates=all_mod_names, threshold=80)) is not None
+    ]
+    std_boime_names = [
+        match for boime_name in extractedInfo.extraction_fields.boimes
+        if (match := __fuzzy_match(query=boime_name, candidates=all_mod_names, threshold=80)) is not None
+    ]
+    std_entity_names = [
+        match for entity_name in extractedInfo.extraction_fields.entities
+        if (match := __fuzzy_match(query=entity_name, candidates=all_mod_names, threshold=80)) is not None
+    ]
+    std_structure_names = [
+        match for structure_name in extractedInfo.extraction_fields.structures
+        if (match := __fuzzy_match(query=structure_name, candidates=all_mod_names, threshold=80)) is not None
+    ]
 
     # search
-    searched_entries = vectorDB.search(query=text.strip(), required_article_type=required_article_type, required_mod_names=required_mod_names, top_k=3)
+    searched_entries = vectorDB.search(query=text.strip())
     for entry in searched_entries:
         logger.info(f"Found entry: {entry}")
         context.append(
@@ -181,8 +186,10 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
         )
     return context
 
+def rerank()
+
 def __fuzzy_match(query: str, candidates: list[str], threshold: int) -> list[str]:
     matches = process.extract(query, candidates, scorer=fuzz.partial_ratio)
-    return [match for match, score, _ in matches if score >= threshold]
+    return ([match for match, score, _ in matches if score >= threshold][:1] or [None])[0]
 
 
