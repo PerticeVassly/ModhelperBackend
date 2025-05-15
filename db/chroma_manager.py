@@ -77,8 +77,9 @@ class ChromaVectorDB:
             Entry(
                 id=id,
                 document=doc,
-                metadata=meta,
-                distance=score
+                metadata=DocumentMetadata(**meta),
+                distance=score,
+                score=score,
             )
             for id, doc, meta, score in zip(
                 results["ids"][0], 

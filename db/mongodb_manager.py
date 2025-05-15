@@ -122,6 +122,12 @@ class MetaInfoCollection:
                     item_names.append(item["name"])
         return item_names
     
+    def find_item_by_name(self, name: str) -> dict:
+        item = self.collection.find_one({"items.name": name}, {"items.$": 1})
+        if item and "items" in item:
+            return item["items"][0]
+        return None
+    
     def find_all_biome_names(self):
         mods = self.collection.find({}, {"biomes.name": 1, "_id": 0})
         biome_names = []
@@ -130,6 +136,12 @@ class MetaInfoCollection:
                 if "name" in biome:
                     biome_names.append(biome["name"])
         return biome_names
+    
+    def find_biome_by_name(self, name: str):
+        biome = self.collection.find_one({"biomes.name": name}, {"biomes.$": 1})
+        if biome and "biomes" in biome:
+            return biome["biomes"][0]
+        return None
     
     def find_all_entity_names(self):
         mods = self.collection.find({}, {"entities.name": 1, "_id": 0})
@@ -140,6 +152,12 @@ class MetaInfoCollection:
                     entity_names.append(entity["name"])
         return entity_names
     
+    def find_entity_by_name(self, name: str):
+        entity = self.collection.find_one({"entities.name": name}, {"entities.$": 1})
+        if entity and "entities" in entity:
+            return entity["entities"][0]
+        return None
+    
     def find_all_structure_names(self):
         mods = self.collection.find({}, {"structures.name": 1, "_id": 0})
         structure_names = []
@@ -148,6 +166,12 @@ class MetaInfoCollection:
                 if "name" in structure:
                     structure_names.append(structure["name"])
         return structure_names
+    
+    def find_structure_by_name(self, name: str):
+        structure = self.collection.find_one({"structures.name": name}, {"structures.$": 1})
+        if structure and "structures" in structure:
+            return structure["structures"][0]
+        return None 
 
 usersRepository = UsersCollection()
 conversationsRepository = ConversationsCollection()

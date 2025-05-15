@@ -1,5 +1,5 @@
 from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM, SummarizeLLM
-from db import conversationsRepository, messagesRepository, vectorDB, all_mod_names
+from db import conversationsRepository, messagesRepository, metaInfosRepository, vectorDB, all_mod_names
 from model import *
 from bson import ObjectId
 from datetime import datetime
@@ -149,10 +149,32 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
     return True
 
 def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
-    context = [] # { description : str, content : str }
-    # TODO now just retrieve the user direct input
+    context = [] 
+    searched_entries = vectorDB.search(query=text.strip(), top_k=8)
+    rerank_and_expand(searched_entries, extractedInfo)
+    num_extra = 3
+    for entry in searched_entries:
+        if (num_extra <= 0):
+            break
+        logger.info(f"Found entry: {entry.model_dump()}")
+        if entry.score == 1:
+            context.append(
+                Reference(
+                    description=entry.metadata.document_name,
+                    content=entry.document
+                )
+            )
+        elif entry.score > 0.6 and entry.score < 1:
+            context.append(
+                Reference(
+                    description=entry.metadata.document_name,
+                    content=entry.document
+                )
+            )
+            num_extra -= 1
+    return context
 
-    # 只有不为null的mod_name才会被使用
+def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> list[Entry]:
     std_mod_names = [
         match for mod_name in extractedInfo.extraction_fields.mods
         if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None
@@ -173,20 +195,95 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
         match for structure_name in extractedInfo.extraction_fields.structures
         if (match := __fuzzy_match(query=structure_name, candidates=all_mod_names, threshold=80)) is not None
     ]
+    # based on extractedInfo
 
-    # search
-    searched_entries = vectorDB.search(query=text.strip())
-    for entry in searched_entries:
-        logger.info(f"Found entry: {entry}")
-        context.append(
-            Reference(
-                description=entry["metadata"]["document_name"],
-                content=entry["document"],
+    def adjust_score(entry: Entry) -> int:
+        base_score = entry.distance
+        rule_socre = 0.0
+        if entry.metadata.mod_name in std_mod_names:
+            rule_socre += 1
+        if (entry.metadata.type == "introduction" and extractedInfo.intention == "basic_info") or \
+            (entry.metadata.type == "guide" and extractedInfo.intention == "gameplay_guide") :
+            rule_socre += 1
+        rule_score = min(rule_socre, 1.0)
+        alpha = 0.8
+        return int(base_score * (1 - alpha) + rule_score * alpha)
+    
+    # rerank
+    entries = sorted(entries, key=lambda x: adjust_score(x), reverse=True)
+
+    # expand
+    for item_name in std_item_names:
+        item = vectorDB.find_item_by_name(item_name)
+        if item:
+            entries.insert(0,
+                Entry(
+                    document=item.content,
+                    metadata=DocumentMetadata(
+                        id=str(item.name),
+                        document_name=item.name,
+                        url=item.item_url,
+                        type=DocumentEnum.generalItem,
+                        mod_name=item.mod_name
+                    ),
+                    distance=1,
+                    score = 1
+                )
             )
-        )
-    return context
+    for boime_name in std_boime_names:
+        boime = vectorDB.find_biome_by_name(boime_name)
+        if boime:
+            entries.insert(0,
+                Entry(
+                    document=boime.content,
+                    metadata=DocumentMetadata(
+                        id=str(boime.name),
+                        document_name=boime.name,
+                        url=boime.biome_url,
+                        type=DocumentEnum.generalItem,
+                        mod_name=boime.mod_name
+                    ),
+                    distance=1,
+                    score = 1
+                )
+            )
 
-def rerank()
+    for entity_name in std_entity_names:
+        entity = vectorDB.find_entity_by_name(entity_name)
+        if entity:
+            entries.insert(0,
+                Entry(
+                    document=entity.content,
+                    metadata=DocumentMetadata(
+                        id=str(entity.name),
+                        document_name=entity.name,
+                        url=entity.entity_url,
+                        type=DocumentEnum.generalItem,
+                        mod_name=entity.mod_name
+                    ),
+                    distance = 1,
+                    score = 1
+                )
+            )
+    
+    for structure_name in std_structure_names:
+        structure = vectorDB.find_structure_by_name(structure_name)
+        if structure:
+            entries.insert(0,
+                Entry(
+                    document=structure.content,
+                    metadata=DocumentMetadata(
+                        id=str(structure.name),
+                        document_name=structure.name,
+                        url=structure.structure_url,
+                        type=DocumentEnum.generalItem,
+                        mod_name=structure.mod_name
+                    ),
+                    distance = 1,
+                    score = 1
+                )
+            )
+
 
 def __fuzzy_match(query: str, candidates: list[str], threshold: int) -> list[str]:
     matches = process.extract(query, candidates, scorer=fuzz.partial_ratio)

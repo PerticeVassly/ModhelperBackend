@@ -109,3 +109,4 @@ class Entry(BaseModel):
     document: str
     metadata: DocumentMetadata
     distance: float
+    score = float
