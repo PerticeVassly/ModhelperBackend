@@ -150,7 +150,7 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
 
 def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
     context = [] 
-    searched_entries = vectorDB.search(query=text.strip(), top_k=8)
+    searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=8)
     searched_entries = rerank_and_expand(searched_entries, extractedInfo)
     logger.info(f"rerank and expand entries: {searched_entries}")
     num_extra = 3
@@ -164,7 +164,7 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
                     content=entry.document
                 )
             )
-        elif entry.score > 0.6 and entry.score < 1:
+        elif entry.score > 0.3 and entry.score < 1:
             context.append(
                 Reference(
                     description=entry.metadata.document_name,
@@ -199,6 +199,7 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
         match for structure_name in extractedInfo.extraction_fields.structures
         if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=80)) is not None
     ]
+    logger.info(f"std_structure_names: {std_structure_names}")
     # based on extractedInfo
     
 
@@ -294,7 +295,6 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
             )
 
     return entries
-
 
 def __fuzzy_match(query: str, candidates: list[str], threshold: int) -> list[str]:
     matches = process.extract(query, candidates, scorer=fuzz.partial_ratio)

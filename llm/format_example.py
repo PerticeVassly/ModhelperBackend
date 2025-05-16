@@ -13,5 +13,6 @@ extractedInfoExample = ExtractedInfo(
         biomes=["biome1", "biome2"],
         structures=["structure1", "structure2"]
     ),
-    intention=intentionEnum.basic_info
+    intention=intentionEnum.basic_info,
+    answer="回答"
 )

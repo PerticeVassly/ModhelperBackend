@@ -37,6 +37,7 @@ class ExtractedInfo(BaseModel):
     is_mc: Literal[0, 1]
     extraction_fields: Optional[ExtractedFields]
     intention: Union[intentionEnum, Literal[''], None]
+    answer: Optional[str] = None
 
 # summarizeTitle generate by summarize llm
 class SummarizeTitle(BaseModel):

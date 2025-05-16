@@ -43,7 +43,7 @@ from model import *
 #                     front,
 #                     ModRelationType.dependency
 #                 ))
-def load_mods():
+def load_mods(overwrite: bool = False):
     # load all the json file in data/raw/
 
     # and add them to the database
@@ -58,7 +58,8 @@ def load_mods():
                         url= data["detail_page_url"],
                         type= DocumentEnum.introduction,
                         mod_name= data["mod_name"],
-                    )
+                    ),
+                    overwrite=overwrite
                 )
 
                 for guide in data["guides"]:
@@ -69,17 +70,18 @@ def load_mods():
                             url= guide["guide_page_url"],
                             type= DocumentEnum.guide,
                             mod_name= data["mod_name"],
-                        )
+                        ),
+                        overwrite=overwrite
                     )
                     
-                metaInfosRepository.insert_one(Mod.model_validate(data))
+                metaInfosRepository.insert_one(Mod.model_validate(data), overwrite=overwrite)
                     
-                for front in data["run_methods"]:
-                    graphDB.add(ModRelation(
-                        source_mod= data["mod_name"],
-                        target_mod= front,
-                        relationship_type= ModRelationType.dependency
-                    ))
+                # for front in data["run_methods"]:
+                #     graphDB.add(ModRelation(
+                #         source_mod= data["mod_name"],
+                #         target_mod= front,
+                #         relationship_type= ModRelationType.dependency
+                #     ))
                               
 def str2platform(a: str) -> ModPlatform:
     a = a.strip().lower()
@@ -91,4 +93,4 @@ def str2platform(a: str) -> ModPlatform:
         return ModPlatform.CROSS
 
 if __name__ == "__main__":    
-    load_mods()
+    load_mods(overwrite = True)
