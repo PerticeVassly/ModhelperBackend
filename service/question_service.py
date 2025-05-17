@@ -164,7 +164,7 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
                     content=entry.document
                 )
             )
-        elif entry.score > 0.3 and entry.score < 1:
+        elif entry.score < 1:
             context.append(
                 Reference(
                     description=entry.metadata.document_name,
@@ -229,7 +229,7 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
                     metadata=DocumentMetadata(
                         id=str(item.name),
                         document_name=item.name,
-                        url=item.item_url,
+                        url=item.url,
                         type=DocumentEnum.generalItem,
                         mod_name=""
                     ),
@@ -247,7 +247,7 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
                     metadata=DocumentMetadata(
                         id=str(boime.name),
                         document_name=boime.name,
-                        url=boime.biome_url,
+                        url=boime.url,
                         type=DocumentEnum.generalItem,
                         mod_name=""
                     ),
@@ -266,7 +266,7 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
                     metadata=DocumentMetadata(
                         id=str(entity.name),
                         document_name=entity.name,
-                        url=entity.entity_url,
+                        url=entity.url,
                         type=DocumentEnum.generalItem,
                         mod_name=""
                     ),
@@ -285,7 +285,7 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
                     metadata=DocumentMetadata(
                         id=str(structure.name),
                         document_name=structure.name,
-                        url=structure.structure_url,
+                        url=structure.url,
                         type=DocumentEnum.generalItem,
                         mod_name=""
                     ),

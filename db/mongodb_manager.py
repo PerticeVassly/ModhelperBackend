@@ -125,7 +125,7 @@ class MetaInfoCollection:
     def find_item_by_name(self, name: str) -> dict:
         item = self.collection.find_one({"items.name": name}, {"items.$": 1})
         if item and "items" in item:
-            return Item.model_validate(item["items"][0])
+            return GeneralItem.model_validate(item["items"][0])
         return None
     
     def find_all_biome_names(self):
@@ -140,7 +140,7 @@ class MetaInfoCollection:
     def find_biome_by_name(self, name: str):
         biome = self.collection.find_one({"biomes.name": name}, {"biomes.$": 1})
         if biome and "biomes" in biome:
-            return Biome.model_validate(biome["biomes"][0])
+            return GeneralItem.model_validate(biome["biomes"][0])
         return None
     
     def find_all_entity_names(self):
@@ -155,7 +155,7 @@ class MetaInfoCollection:
     def find_entity_by_name(self, name: str):
         entity = self.collection.find_one({"entities.name": name}, {"entities.$": 1})
         if entity and "entities" in entity:
-            return Entity.model_validate(entity["entities"][0])
+            return GeneralItem.model_validate(entity["entities"][0])
         return None
     
     def find_all_structure_names(self):
@@ -170,7 +170,7 @@ class MetaInfoCollection:
     def find_structure_by_name(self, name: str):
         structure = self.collection.find_one({"structures.name": name}, {"structures.$": 1})
         if structure and "structures" in structure:
-            return Structure.model_validate(structure["structures"][0])
+            return GeneralItem.model_validate(structure["structures"][0])
         return None 
 
 usersRepository = UsersCollection()

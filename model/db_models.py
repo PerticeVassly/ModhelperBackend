@@ -34,29 +34,15 @@ class Guide(BaseModel):
     guide_name : str
     content : str
 
-class Biome(BaseModel):
-    classification : str
+class GeneralItem(BaseModel):
     name : str
-    biome_url : str
+    url : str
     description : str
 
-class Item(BaseModel):
-    classification : str
-    name : str
-    item_url : str
-    description : str
-
-class Entity(BaseModel):
-    classification : str
-    name : str
-    entity_url : str
-    description : str
-
-class Structure(BaseModel):
-    classification : str
-    name : str
-    structure_url : str
-    description : str
+class Guide(BaseModel):
+    guide_page_url : str
+    guide_name : str
+    content : str
 
 class Mod(BaseModel):
     mod_name : str
@@ -69,10 +55,12 @@ class Mod(BaseModel):
     detail_page_url : str
     introduction : str
     guides : list[Guide] = []
-    items : list[Item] = []
-    biomes : list[Biome] = []
-    entities : list[Entity] = []
-    structures : list[Structure] = []
+    items : list[GeneralItem] = []
+    biomes : list[GeneralItem] = []
+    entities : list[GeneralItem] = []
+    structures : list[GeneralItem] = []
+
+
 
 class DocumentEnum(str, Enum):
     introduction = "introduction"
