@@ -38,6 +38,8 @@ class ExtractedInfo(BaseModel):
     extraction_fields: Optional[ExtractedFields]
     intention: Union[intentionEnum, Literal[''], None]
     answer: Optional[str] = None
+    stepBackQuestion: Optional[str] = None
+    stepBackQuestionAnswer: Optional[str] = None
 
 # summarizeTitle generate by summarize llm
 class SummarizeTitle(BaseModel):

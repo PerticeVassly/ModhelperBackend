@@ -54,6 +54,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     # fetch history
     messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # retrieve context based on extracted info
+    print(f"extractedInfo: {extractedInfo}")
     context = __retrieve(
         extractedInfo=extractedInfo,
         text=questionRequest.question)
@@ -152,7 +153,7 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
     context = [] 
     searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=8)
     searched_entries = rerank_and_expand(searched_entries, extractedInfo)
-    logger.info(f"rerank and expand entries: {searched_entries}")
+    # logger.info(f"rerank and expand entries: {searched_entries}")
     num_extra = 3
     for entry in searched_entries:
         if (num_extra <= 0):

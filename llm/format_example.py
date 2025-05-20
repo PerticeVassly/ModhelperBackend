@@ -14,5 +14,7 @@ extractedInfoExample = ExtractedInfo(
         structures=["structure1", "structure2"]
     ),
     intention=intentionEnum.basic_info,
-    answer="回答"
+    answer="回答",
+    stepBackQuestion="退后提示的问题",
+    stepBackQuestionAnswer="退后提示的问题的回答"
 )

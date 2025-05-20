@@ -20,7 +20,7 @@ class ExtractorPrompt(Prompt):
 
     def __init__(self):
         template = textwrap.dedent("""
-            针对给定的文本，回答提取文本关键信息，并且尝试回答文本。
+            针对给定的文本，回答提取文本关键信息，并且尝试回答文本。如果文本问题过于具体，可以尝试先生成一个更通用的问题，并且回答它。再回答文本问题。
             1. 问题是否是Minecraft/我的世界/MC 模组相关问题，使用0/1表示
             2. 如果是Minecraft/我的世界/MC 模组相关问题，提取出问题中的感兴趣实体信息，包括模组名称、物品名(方块, 物品)，群系名称(生物群系，世界)，实体(生物，boss), 结构(包括建筑，地图)。使用json格式返回结果；若不是MCmod相关问题则各个实体信息均返回空列表
             3. 如果是MC相关问题，判断问题的意图，从“模组基本信息查询”，“模组玩法攻略查询”，“模组推荐”，“整合包定制”，“其他”，五个意图中选择一个返回，分别使用 basic_info、gameplay_guide、mod_recommendation、pack_customization、other 表示；如果不是MCmod相关问题，返回空字符串即可
