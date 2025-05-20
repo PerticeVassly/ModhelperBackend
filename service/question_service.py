@@ -54,7 +54,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     # fetch history
     messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # retrieve context based on extracted info
-    logger.debug(f"extractedInfo: {extractedInfo}")
+    logger.info(f"extractedInfo: {extractedInfo}")
     context = __retrieve(
         extractedInfo=extractedInfo,
         text=questionRequest.question)
@@ -150,8 +150,8 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
     return True
 
 def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
-    searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=8)
-    stepback_searched_entries = vectorDB.search(query=extractedInfo.stepBackQuestion + extractedInfo.stepBackQuestionAnswer, top_k=8)
+    searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=3)
+    stepback_searched_entries = vectorDB.search(query=extractedInfo.stepBackQuestion + extractedInfo.stepBackQuestionAnswer, top_k=3)
     all_entries = searched_entries + stepback_searched_entries
     all_refs = __generate_references(all_entries, extractedInfo)
     # logger.info(f"rerank and expand entries: {searched_entries}")
@@ -160,8 +160,9 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
 def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) -> list[Reference]:
     std_mod_names = [
         match for mod_name in extractedInfo.extraction_fields.mods
-        if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=90)) is not None
+        if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None
     ]
+    logger.info(f"std_mod_names: {std_mod_names}")
     std_item_names = [
         match for item_name in extractedInfo.extraction_fields.items
         if (match := __fuzzy_match(query=item_name, candidates=all_item_names, threshold=90)) is not None
@@ -176,7 +177,7 @@ def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) 
     ]
     std_structure_names = [
         match for structure_name in extractedInfo.extraction_fields.structures
-        if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=80)) is not None
+        if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=90)) is not None
     ]
 
     def __adjust_score(entry: Entry) -> float:
@@ -188,15 +189,32 @@ def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) 
             (entry.metadata.type == "guide" and extractedInfo.intention == "gameplay_guide") :
             rule_socre += 1
         rule_score = min(rule_socre, 1.0)
-        alpha = 0.8
+        alpha = 0.2
         return float(base_score * (1 - alpha) + rule_score * alpha)
-    
+     
+    # TODO 如果没有模组名称匹配，使用投票法选择所有个entry中出现最多的模组名称作为模组名称
+    if not std_mod_names:
+        mod_name_count = {}
+        for entry in entries:
+            if entry.metadata.mod_name not in mod_name_count:
+                mod_name_count[entry.metadata.mod_name] = 0
+            mod_name_count[entry.metadata.mod_name] += 1
+        # sort by count
+        std_mod_names = sorted(mod_name_count.items(), key=lambda x: x[1], reverse=True)
+        std_mod_names = [mod_name for mod_name, _ in std_mod_names[:1]]
+
+    # 如果已经确定了模组名称，那么所有entry必须是关于这个模组的    
+    if std_mod_names:
+        entries = [entry for entry in entries if entry.metadata.mod_name in std_mod_names]
     # rerank
     entries = sorted(entries, key=lambda x: __adjust_score(x), reverse = True)
-
+   
+    logger.info(f"rerank entries: {entries}")
     references : list[Reference] = []
 
-    num_extra = 1
+    # if there is no std_name matched use the retrieved entries
+
+    num_extra = 2
     entries = entries[:num_extra]
     full_documents_map = {}
     for entry in entries:
