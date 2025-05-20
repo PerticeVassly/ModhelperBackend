@@ -23,7 +23,7 @@ class MessageInfo(BaseModel):
     id : Optional[ObjectId] = Field(default=None, alias="_id")
     conversation_id : ObjectId
     user_message : str
-    reference: list[dict[str, str]]
+    reference: list[dict[str, str]] = []
     assistant_message : str
     timestamp : datetime
 

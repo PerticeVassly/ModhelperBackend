@@ -54,7 +54,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     # fetch history
     messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # retrieve context based on extracted info
-    print(f"extractedInfo: {extractedInfo}")
+    logger.debug(f"extractedInfo: {extractedInfo}")
     context = __retrieve(
         extractedInfo=extractedInfo,
         text=questionRequest.question)
@@ -64,7 +64,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     response = rag.chat(
         question=questionRequest.question,
         context=context)
-    # save message
+    logger.debug(f"context: {context}")
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
         user_message=questionRequest.question,
@@ -150,65 +150,36 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
     return True
 
 def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
-    context = [] 
     searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=8)
     stepback_searched_entries = vectorDB.search(query=extractedInfo.stepBackQuestion + extractedInfo.stepBackQuestionAnswer, top_k=8)
     all_entries = searched_entries + stepback_searched_entries
-    all_entries = rerank_and_expand(all_entries, extractedInfo)
-    for entry in all_entries:
-        logger.info(f"entry: {entry}")
+    all_refs = __generate_references(all_entries, extractedInfo)
     # logger.info(f"rerank and expand entries: {searched_entries}")
-    num_extra = 3
-    for entry in all_entries:
-        if (num_extra <= 0):
-            break
-        if entry.score == 1:
-            context.append(
-                Reference(
-                    description=entry.metadata.document_name,
-                    content=entry.document
-                )
-            )
-        elif entry.score < 1:
-            context.append(
-                Reference(
-                    description=entry.metadata.document_name,
-                    content=entry.document
-                )
-            )
-            num_extra -= 1
-    return context
+    return all_refs
 
-def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> list[Entry]:
+def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) -> list[Reference]:
     std_mod_names = [
         match for mod_name in extractedInfo.extraction_fields.mods
         if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=90)) is not None
     ]
-    logger.info(f"std_mod_names: {std_mod_names}")
     std_item_names = [
         match for item_name in extractedInfo.extraction_fields.items
         if (match := __fuzzy_match(query=item_name, candidates=all_item_names, threshold=90)) is not None
     ]
-    logger.info(f"std_item_names: {std_item_names}")
     std_boime_names = [
         match for boime_name in extractedInfo.extraction_fields.biomes
         if (match := __fuzzy_match(query=boime_name, candidates=all_biome_names, threshold=90)) is not None
     ]
-    logger.info(f"std_boime_names: {std_boime_names}")
     std_entity_names = [
         match for entity_name in extractedInfo.extraction_fields.entities
         if (match := __fuzzy_match(query=entity_name, candidates=all_entity_names, threshold=90)) is not None
     ]
-    logger.info(f"std_entity_names: {std_entity_names}")
     std_structure_names = [
         match for structure_name in extractedInfo.extraction_fields.structures
         if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=80)) is not None
     ]
-    logger.info(f"std_structure_names: {std_structure_names}")
-    # based on extractedInfo
-    
 
-    def adjust_score(entry: Entry) -> float:
+    def __adjust_score(entry: Entry) -> float:
         base_score = entry.distance
         rule_socre = 0.0
         if entry.metadata.mod_name in std_mod_names:
@@ -221,85 +192,52 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
         return float(base_score * (1 - alpha) + rule_score * alpha)
     
     # rerank
-    entries = sorted(entries, key=lambda x: adjust_score(x), reverse = True)
+    entries = sorted(entries, key=lambda x: __adjust_score(x), reverse = True)
 
+    references : list[Reference] = []
+
+    num_extra = 1
+    entries = entries[:num_extra]
+    full_documents_map = {}
+    for entry in entries:
+        full_document = metaInfosRepository.find_full_document_by_metadata(metadata=entry.metadata)
+        full_documents_map[entry.metadata.document_name] = full_document
+    for key, value in full_documents_map.items():
+        references.append(Reference(
+            description=key,
+            content=value
+        ))
+    
     # expand
     for item_name in std_item_names:
         item = metaInfosRepository.find_item_by_name(item_name)
         if item:
-            entries.insert(0,
-                Entry(
-                    id=str(item.name),
-                    document=item.description,
-                    metadata=DocumentMetadata(
-                        id=str(item.name),
-                        document_name=item.name,
-                        url=item.url,
-                        type=DocumentEnum.generalItem,
-                        mod_name=""
-                    ),
-                    distance=1,
-                    score = 1
-                )
-            )
+            references.insert(0, Reference(
+                description=item.name,
+                content=item.description
+            ))
     for boime_name in std_boime_names:
         boime = metaInfosRepository.find_biome_by_name(boime_name)
         if boime:
-            entries.insert(0,
-                Entry(
-                    id=str(boime.name),
-                    document=boime.description,
-                    metadata=DocumentMetadata(
-                        id=str(boime.name),
-                        document_name=boime.name,
-                        url=boime.url,
-                        type=DocumentEnum.generalItem,
-                        mod_name=""
-                    ),
-                    distance=1,
-                    score = 1
-                )
-            )
-
+            references.insert(0, Reference(
+                description=boime.name,
+                content=boime.description
+            ))
     for entity_name in std_entity_names:
         entity = metaInfosRepository.find_entity_by_name(entity_name)
         if entity:
-            entries.insert(0,
-                Entry(
-                    id=str(entity.name),
-                    document=entity.description,
-                    metadata=DocumentMetadata(
-                        id=str(entity.name),
-                        document_name=entity.name,
-                        url=entity.url,
-                        type=DocumentEnum.generalItem,
-                        mod_name=""
-                    ),
-                    distance = 1,
-                    score = 1
-                )
-            )
-    
+            references.insert(0, Reference(
+                description=entity.name,
+                content=entity.description
+            ))
     for structure_name in std_structure_names:
         structure = metaInfosRepository.find_structure_by_name(structure_name)
         if structure:
-            entries.insert(0,
-                Entry(
-                    id=str(structure.name),
-                    document=structure.description,
-                    metadata=DocumentMetadata(
-                        id=str(structure.name),
-                        document_name=structure.name,
-                        url=structure.url,
-                        type=DocumentEnum.generalItem,
-                        mod_name=""
-                    ),
-                    distance = 1,
-                    score = 1
-                )
-            )
-
-    return entries
+            references.insert(0, Reference(
+                description=structure.name,
+                content=structure.description
+            ))
+    return references
 
 def __fuzzy_match(query: str, candidates: list[str], threshold: int) -> list[str]:
     matches = process.extract(query, candidates, scorer=fuzz.partial_ratio)
