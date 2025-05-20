@@ -152,10 +152,14 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
 def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
     context = [] 
     searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=8)
-    searched_entries = rerank_and_expand(searched_entries, extractedInfo)
+    stepback_searched_entries = vectorDB.search(query=extractedInfo.stepBackQuestion + extractedInfo.stepBackQuestionAnswer, top_k=8)
+    all_entries = searched_entries + stepback_searched_entries
+    all_entries = rerank_and_expand(all_entries, extractedInfo)
+    for entry in all_entries:
+        logger.info(f"entry: {entry}")
     # logger.info(f"rerank and expand entries: {searched_entries}")
     num_extra = 3
-    for entry in searched_entries:
+    for entry in all_entries:
         if (num_extra <= 0):
             break
         if entry.score == 1:
@@ -204,7 +208,7 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
     # based on extractedInfo
     
 
-    def adjust_score(entry: Entry) -> int:
+    def adjust_score(entry: Entry) -> float:
         base_score = entry.distance
         rule_socre = 0.0
         if entry.metadata.mod_name in std_mod_names:
@@ -214,10 +218,10 @@ def rerank_and_expand(entries : list[Entry], extractedInfo : ExtractedInfo) -> l
             rule_socre += 1
         rule_score = min(rule_socre, 1.0)
         alpha = 0.8
-        return int(base_score * (1 - alpha) + rule_score * alpha)
+        return float(base_score * (1 - alpha) + rule_score * alpha)
     
     # rerank
-    entries = sorted(entries, key=lambda x: adjust_score(x), reverse=True)
+    entries = sorted(entries, key=lambda x: adjust_score(x), reverse = True)
 
     # expand
     for item_name in std_item_names:
