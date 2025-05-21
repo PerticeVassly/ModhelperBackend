@@ -32,7 +32,7 @@ def gen_embedding(input: str) -> List[float]:
         logger.error(f"Failed to generate embedding: {e}")
         return []
 
-def split_text(text: str, max_length: int = 768) -> List[str]:
+def split_text(text: str, max_length: int = 500) -> List[str]:
     words = text.strip().splitlines()
     chunks = []
     current_chunk = []
