@@ -99,6 +99,9 @@ def handle_delete_conversation(conversation_id : str, userInfo: UserInfo):
     # delete conversation
     conversationsRepository.delete_one(ObjectId(conversation_id))
     messagesRepository.delete_many_by_conversation_id(conversation_id=ObjectId(conversation_id))
+    return DeleteConversationResponse(
+        message="Conversation deleted successfully"
+    )
 
 def handle_get_conversation_messages(conversation_id: str, userInfo: UserInfo) -> list[GetConversationMessagesResponseItem]:
     # check if the user do has this conversation
