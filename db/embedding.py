@@ -33,7 +33,7 @@ def gen_embedding(input: str) -> List[float]:
         return []
 
 def split_text(text: str, max_length: int = 320) -> List[str]:
-    words = text.strip().split()
+    words = text.strip().splitlines()
     chunks = []
     current_chunk = []
     current_length = 0
@@ -43,12 +43,12 @@ def split_text(text: str, max_length: int = 320) -> List[str]:
             current_chunk.append(word)
             current_length += len(word) + 1
         else:
-            chunks.append(" ".join(current_chunk))
+            chunks.append("\n".join(current_chunk))
             current_chunk = [word]
             current_length = len(word)
     
     if current_chunk:
-        chunks.append(" ".join(current_chunk))
+        chunks.append("\n".join(current_chunk))
 
     return chunks
    

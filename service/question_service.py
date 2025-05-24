@@ -1,5 +1,5 @@
 from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM, SummarizeLLM
-from db import conversationsRepository, messagesRepository, vectorDB, all_mod_names
+from db import conversationsRepository, messagesRepository, metaInfosRepository, vectorDB, all_mod_names, all_item_names, all_entity_names, all_structure_names, all_biome_names
 from model import *
 from bson import ObjectId
 from datetime import datetime
@@ -54,6 +54,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     # fetch history
     messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # retrieve context based on extracted info
+    logger.info(f"extractedInfo: {extractedInfo}")
     context = __retrieve(
         extractedInfo=extractedInfo,
         text=questionRequest.question)
@@ -63,7 +64,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     response = rag.chat(
         question=questionRequest.question,
         context=context)
-    # save message
+    logger.debug(f"context: {context}")
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
         user_message=questionRequest.question,
@@ -149,39 +150,116 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
     return True
 
 def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
-    context = [] # { description : str, content : str }
-    # TODO now just retrieve the user direct input
+    searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=3)
+    stepback_searched_entries = vectorDB.search(query=extractedInfo.stepBackQuestion + extractedInfo.stepBackQuestionAnswer, top_k=3)
+    all_entries = searched_entries + stepback_searched_entries
+    all_refs = __generate_references(all_entries, extractedInfo)
+    # logger.info(f"rerank and expand entries: {searched_entries}")
+    return all_refs
 
-    # use extractedInfo to filter
-    mod_names = extractedInfo.extraction_fields.mod_name
-    matched_names = []
-    for name in mod_names:
-        matches = __fuzzy_match(query = name, candidates=all_mod_names, threshold = 80)
-        if matches:
-            matched_names.append(matches[0])
+def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) -> list[Reference]:
+    std_mod_names = [
+        match for mod_name in extractedInfo.extraction_fields.mods
+        if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None
+    ]
+    logger.info(f"std_mod_names: {std_mod_names}")
+    std_item_names = [
+        match for item_name in extractedInfo.extraction_fields.items
+        if (match := __fuzzy_match(query=item_name, candidates=all_item_names, threshold=90)) is not None
+    ]
+    std_boime_names = [
+        match for boime_name in extractedInfo.extraction_fields.biomes
+        if (match := __fuzzy_match(query=boime_name, candidates=all_biome_names, threshold=90)) is not None
+    ]
+    std_entity_names = [
+        match for entity_name in extractedInfo.extraction_fields.entities
+        if (match := __fuzzy_match(query=entity_name, candidates=all_entity_names, threshold=90)) is not None
+    ]
+    std_structure_names = [
+        match for structure_name in extractedInfo.extraction_fields.structures
+        if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=90)) is not None
+    ]
 
-    logger.info(f"Matched mod names: {matched_names} in {all_mod_names}")
-    # if len == 0 required_mod_names = None
-    required_mod_names = matched_names;
-    required_article_type = None
-    if extractedInfo.intention == intentionEnum.basic_info:
-        required_article_type = "introduction"
-    elif extractedInfo.intention == intentionEnum.gameplay_guide:
-        required_article_type = "guide"
+    def __adjust_score(entry: Entry) -> float:
+        base_score = entry.distance
+        rule_socre = 0.0
+        if entry.metadata.mod_name in std_mod_names:
+            rule_socre += 1
+        if (entry.metadata.type == "introduction" and extractedInfo.intention == "basic_info") or \
+            (entry.metadata.type == "guide" and extractedInfo.intention == "gameplay_guide") :
+            rule_socre += 1
+        rule_score = min(rule_socre, 1.0)
+        alpha = 0.2
+        return float(base_score * (1 - alpha) + rule_score * alpha)
+     
+    # TODO 如果没有模组名称匹配，使用投票法选择所有个entry中出现最多的模组名称作为模组名称
+    if not std_mod_names:
+        mod_name_count = {}
+        for entry in entries:
+            if entry.metadata.mod_name not in mod_name_count:
+                mod_name_count[entry.metadata.mod_name] = 0
+            mod_name_count[entry.metadata.mod_name] += 1
+        # sort by count
+        std_mod_names = sorted(mod_name_count.items(), key=lambda x: x[1], reverse=True)
+        std_mod_names = [mod_name for mod_name, _ in std_mod_names[:1]]
 
-    # search
-    searched_entries = vectorDB.search(query=text.strip(), required_article_type=required_article_type, required_mod_names=required_mod_names, top_k=3)
-    for entry in searched_entries:
-        logger.info(f"Found entry: {entry}")
-        context.append(
-            Reference(
-                description=entry["id"],
-                content=entry["document"],
-            )
-        )
-    return context
+    # 如果已经确定了模组名称，那么所有entry必须是关于这个模组的    
+    if std_mod_names:
+        entries = [entry for entry in entries if entry.metadata.mod_name in std_mod_names]
+    # rerank
+    entries = sorted(entries, key=lambda x: __adjust_score(x), reverse = True)
+   
+    logger.info(f"rerank entries: {entries}")
+    references : list[Reference] = []
+
+    # if there is no std_name matched use the retrieved entries
+
+    num_extra = 2
+    entries = entries[:num_extra]
+    full_documents_map = {}
+    for entry in entries:
+        full_document = metaInfosRepository.find_full_document_by_metadata(metadata=entry.metadata)
+        full_documents_map[entry.metadata.document_name] = full_document
+    for key, value in full_documents_map.items():
+        references.append(Reference(
+            description=key,
+            content=value
+        ))
+    
+    # expand
+    for item_name in std_item_names:
+        item = metaInfosRepository.find_item_by_name(item_name)
+        if item and item.description:
+            # insert at the beginning
+            references.insert(0, Reference(
+                description=item.name,
+                content=item.description
+            ))
+    for boime_name in std_boime_names:
+        boime = metaInfosRepository.find_biome_by_name(boime_name)
+        if boime and boime.description:
+            references.insert(0, Reference(
+                description=boime.name,
+                content=boime.description
+            ))
+    for entity_name in std_entity_names:
+        entity = metaInfosRepository.find_entity_by_name(entity_name)
+        if entity and entity.description:
+            references.insert(0, Reference(
+                description=entity.name,
+                content=entity.description
+            ))
+    for structure_name in std_structure_names:
+        structure = metaInfosRepository.find_structure_by_name(structure_name)
+        if structure and structure.description:
+            references.insert(0, Reference(
+                description=structure.name,
+                content=structure.description
+            ))
+    return references
 
 def __fuzzy_match(query: str, candidates: list[str], threshold: int) -> list[str]:
     matches = process.extract(query, candidates, scorer=fuzz.partial_ratio)
-    return [match for match, score, _ in matches if score >= threshold]
+    return ([match for match, score, _ in matches if score >= threshold][:1] or [None])[0]
+
 

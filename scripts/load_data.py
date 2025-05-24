@@ -2,47 +2,21 @@ import json
 from db import *
 import sys
 import os
+from model import *
+import json
+import logging
 
-# def load_guide():
-#     with open(f"./data/raw/{tag}/guide_page.json") as file:
-#         file = json.load(file)
-        
-#         for mod in file:
-#             mod_name = mod["mod_name"]
-            
-#             for guide in mod["guide_pages"]:
-#                 guide_name = f"{mod_name} {guide['guide_name']}"
-#                 guide_content = f"{guide_name}: {guide['guide_body']}"
+blocked_documents = json.load(open("./scripts/blocked_documents.json"))
 
-#                 vectorDB.add(guide_name, guide_content)
-        
+logger = logging.getLogger("database")
 
-# def load_detail():
-#     with open(f"./data/raw/{tag}/detail_page.json") as file:
-#         file = json.load(file)
-        
-#         for mod in file:
-#             mod_name = mod["mod_name"]
-#             mod_desc = mod["detail_page"]["mod_description"]
-#             sup_plat = [str2platform(s) for s in mod["detail_page"]["support_platforms"]]
-#             dep_meth = mod["detail_page"]["run_methods"]
-#             mod_tags = mod["detail_page"]["mod_tags"]
 
-#             relationDB.add(ModMetadata(
-#                 mod_name,
-#                 mod_tags,
-#                 mod_desc,
-#                 sup_plat[0],
-#                 None
-#             ))
-            
-#             for front in dep_meth:
-#                 graphDB.add(ModRelation(
-#                     mod_name,
-#                     front,
-#                     ModRelationType.dependency
-#                 ))
-def load_mods():
+def filter_documents(raw_text: str) -> bool:
+    # if the document is too long, we assume it as not relavant
+    # TODO now do not need
+    return True
+
+def load_mods(overwrite: bool = False):
     # load all the json file in data/raw/
 
     # and add them to the database
@@ -51,38 +25,43 @@ def load_mods():
             with open(f"./data/raw/{file}") as f:
                 data = json.load(f)
                 vectorDB.add(
-                    article_name= data["mod_name"] + "介绍",
-                    article_type= "introduction",
-                    url = data["detail_page_url"],
-                    content= data["introduction"],
-                    mod_name= data["mod_name"],
+                    raw_text= data["introduction"],
+                    metadata= DocumentMetadata(
+                        document_name= data["mod_name"] + " introduction",
+                        url= data["detail_page_url"],
+                        type= DocumentEnum.introduction,
+                        mod_name= data["mod_name"],
+                    ),
+                    overwrite=overwrite
                 )
 
+                tobe_blocked_documents = set(blocked_documents.get(data["mod_name"], []))
                 for guide in data["guides"]:
+                    if guide["guide_name"] in tobe_blocked_documents:
+                        logger.info(f"Blocked document: {guide['guide_name']}") 
+                        continue
+                    if not filter_documents(guide["content"]):
+                        logger.info(f"Filtered document: {guide['guide_name']}")
+                        continue
                     vectorDB.add(
-                        article_name= data["mod_name"] + guide["guide_name"],
-                        article_type= "guide",
-                        url = guide["guide_page_url"],
-                        content= guide["content"],
-                        mod_name= data["mod_name"],
+                        raw_text= guide["content"],
+                        metadata= DocumentMetadata(
+                            document_name= guide["guide_name"],
+                            url= guide["guide_page_url"],
+                            type= DocumentEnum.guide,
+                            mod_name= data["mod_name"],
+                        ),
+                        overwrite=overwrite
                     )
-
-                # TODO more precise
-                relationDB.add(ModMetadata(
-                    name= data["mod_name"],
-                    tags= data["tags"],
-                    description= data["introduction"],
-                    support_platform=str2platform(data["support_platforms"][0]),
-                    download_url= None,
-                ))
-
-                # TODO more precise
-                for front in data["run_methods"]:
-                    graphDB.add(ModRelation(
-                        source_mod= data["mod_name"],
-                        target_mod= front,
-                        relationship_type= ModRelationType.dependency
-                    ))
+                    
+                metaInfosRepository.insert_one(Mod.model_validate(data), overwrite=overwrite)
+                    
+                # for front in data["run_methods"]:
+                #     graphDB.add(ModRelation(
+                #         source_mod= data["mod_name"],
+                #         target_mod= front,
+                #         relationship_type= ModRelationType.dependency
+                #     ))
                               
 def str2platform(a: str) -> ModPlatform:
     a = a.strip().lower()
@@ -94,4 +73,4 @@ def str2platform(a: str) -> ModPlatform:
         return ModPlatform.CROSS
 
 if __name__ == "__main__":    
-    load_mods()
+    load_mods(overwrite = True)

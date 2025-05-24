@@ -41,7 +41,7 @@ LOGGING_CONFIG = {
             "propagate": False,
         },
         "llm": {
-            "level": "DEBUG",
+            "level": "INFO",
             "handlers": ["console"],
             "propagate": False,
         },

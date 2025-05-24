@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     LLM_MODEL_NAME: str = Field(default="deepseek-chat", env="LLM_MODEL_NAME")  
     LLM_BASE_URL: str = Field(default = "https://api.deepseek.com",env="LLM_BASE_URL") 
     LLM_TEMPERATURE: float = Field(default=0.7, env="LLM_TEMPERATURE")
-    LLM_MAX_TOKENS: int = Field(default=1000, env="LLM_MAX_TOKENS")
+    LLM_MAX_TOKENS: int = Field(default=3000, env="LLM_MAX_TOKENS")
 
     # JWT 配置
     JWT_SECRET_KEY : str = Field(default="JWT_KEY", env="JWT_SECRET_KEY")

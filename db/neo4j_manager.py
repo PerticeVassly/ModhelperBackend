@@ -1,13 +1,12 @@
 from neo4j import GraphDatabase
 from typing import List
-from .base import BaseGraphDB, ModRelation
+from model import *
 from config import settings
 import logging
-import time
 
 logger = logging.getLogger("database")
 
-class Neo4jGraphDB(BaseGraphDB):
+class Neo4jGraphDB:
     def __init__(self):
         self.driver = GraphDatabase.driver(
             settings.NEO4J_URL, 

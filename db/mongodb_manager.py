@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from config import settings
-from model import UserInfo, ConversationInfo, MessageInfo
+from model import *
 from bson import ObjectId
 import logging
 from pymongo.results import InsertOneResult
@@ -92,9 +92,106 @@ class MessagesCollection:
         except Exception as e:
             logger.error(f"Error inserting message: {e}")
             return False
+        
+class MetaInfoCollection:
+    def __init__(self):
+        self.collection = db["metaInfos"]
+    
+    def insert_one(self, mod : Mod, overwrite=False) -> bool:
+        query = {"name" : mod.mod_name}
+        existing = self.collection.find_one(query)
+        if existing:
+            if not overwrite:
+                return False
+            else:
+                self.collection.replace_one(query, mod.model_dump())
+                return True
+        else:
+            self.collection.insert_one(mod.model_dump())
+
+    def find_all_mod_names(self):
+        mods = self.collection.find({}, {"mod_name": 1, "_id": 0})
+        return [mod["mod_name"] for mod in mods if "mod_name" in mod]
+    
+    def find_all_item_names(self):
+        mods = self.collection.find({}, {"items.name": 1, "_id": 0})
+        item_names = []
+        for mod in mods:
+            for item in mod.get("items", []):
+                if "name" in item:
+                    item_names.append(item["name"])
+        return item_names
+    
+    def find_item_by_name(self, name: str) -> GeneralItem:
+        item = self.collection.find_one({"items.name": name}, {"items.$": 1})
+        if item and "items" in item:
+            return GeneralItem.model_validate(item["items"][0])
+        return None
+    
+    def find_all_biome_names(self):
+        mods = self.collection.find({}, {"biomes.name": 1, "_id": 0})
+        biome_names = []
+        for mod in mods:
+            for biome in mod.get("biomes", []):
+                if "name" in biome:
+                    biome_names.append(biome["name"])
+        return biome_names
+    
+    def find_biome_by_name(self, name: str) -> GeneralItem:
+        biome = self.collection.find_one({"biomes.name": name}, {"biomes.$": 1})
+        if biome and "biomes" in biome:
+            return GeneralItem.model_validate(biome["biomes"][0])
+        return None
+    
+    def find_all_entity_names(self):
+        mods = self.collection.find({}, {"entities.name": 1, "_id": 0})
+        entity_names = []
+        for mod in mods:
+            for entity in mod.get("entities", []):
+                if "name" in entity:
+                    entity_names.append(entity["name"])
+        return entity_names
+    
+    def find_entity_by_name(self, name: str) -> GeneralItem:
+        entity = self.collection.find_one({"entities.name": name}, {"entities.$": 1})
+        if entity and "entities" in entity:
+            return GeneralItem.model_validate(entity["entities"][0])
+        return None
+    
+    def find_all_structure_names(self):
+        mods = self.collection.find({}, {"structures.name": 1, "_id": 0})
+        structure_names = []
+        for mod in mods:
+            for structure in mod.get("structures", []):
+                if "name" in structure:
+                    structure_names.append(structure["name"])
+        return structure_names
+    
+    def find_structure_by_name(self, name: str) -> GeneralItem:
+        structure = self.collection.find_one({"structures.name": name}, {"structures.$": 1})
+        if structure and "structures" in structure:
+            return GeneralItem.model_validate(structure["structures"][0])
+        return None 
+
+    def find_full_document_by_metadata(self, metadata: DocumentMetadata) -> str:
+        if metadata.type == DocumentEnum.introduction:
+            mod_name = metadata.mod_name
+            # find the introduction of the mod
+            introductions = self.collection.find_one({"mod_name": mod_name}, {"introduction": 1})
+            return introductions["introduction"] if introductions else None
+        elif metadata.type == DocumentEnum.guide:
+            mod_name = metadata.mod_name
+            guide_name = metadata.document_name
+            # find the guide of the mod
+            guides = self.collection.find_one({"mod_name": mod_name, "guides.guide_name": guide_name}, {"guides.$": 1})
+            return guides["guides"][0]["content"] if guides else None
+        else:
+            logger.error(f"Unknown document type: {metadata.type}")
+            return None
 
 usersRepository = UsersCollection()
 conversationsRepository = ConversationsCollection()
 messagesRepository = MessagesCollection()
+metaInfosRepository = MetaInfoCollection()
 
 
