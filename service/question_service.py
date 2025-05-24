@@ -229,28 +229,29 @@ def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) 
     # expand
     for item_name in std_item_names:
         item = metaInfosRepository.find_item_by_name(item_name)
-        if item:
+        if item and item.description:
+            # insert at the beginning
             references.insert(0, Reference(
                 description=item.name,
                 content=item.description
             ))
     for boime_name in std_boime_names:
         boime = metaInfosRepository.find_biome_by_name(boime_name)
-        if boime:
+        if boime and boime.description:
             references.insert(0, Reference(
                 description=boime.name,
                 content=boime.description
             ))
     for entity_name in std_entity_names:
         entity = metaInfosRepository.find_entity_by_name(entity_name)
-        if entity:
+        if entity and entity.description:
             references.insert(0, Reference(
                 description=entity.name,
                 content=entity.description
             ))
     for structure_name in std_structure_names:
         structure = metaInfosRepository.find_structure_by_name(structure_name)
-        if structure:
+        if structure and structure.description:
             references.insert(0, Reference(
                 description=structure.name,
                 content=structure.description
