@@ -1,4 +1,4 @@
-from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM, SummarizeLLM
+from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM, SummarizeLLM, CategoryLLM, ModRecommendationLLM
 from db import conversationsRepository, messagesRepository, metaInfosRepository, vectorDB, all_mod_names, all_item_names, all_entity_names, all_structure_names, all_biome_names
 from model import *
 from bson import ObjectId
@@ -55,15 +55,37 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # retrieve context based on extracted info
     logger.info(f"extractedInfo: {extractedInfo}")
-    context = __retrieve(
-        extractedInfo=extractedInfo,
-        text=questionRequest.question)
-    # chat with llm
-    rag = RAGLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
-    response = rag.chat(
-        question=questionRequest.question,
-        context=context)
+    
+
+    if extractedInfo.intention == "mod_recommendation" or extractedInfo.intention == "pack_customization":
+        context = []
+        categorizer = CategoryLLM(
+            llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
+        categoryInfo = categorizer.categorize(
+            text=questionRequest.question,
+        )
+        logger.info(f"categoryInfo: {categoryInfo}")
+        filtered_mod_brief_introductions = metaInfosRepository.filter_mods(
+            categories=categoryInfo.categories,
+        )
+        logger.info(f"filtered_mod_brief_introductions: {[mod.mod_name for mod in filtered_mod_brief_introductions]}")
+        recommender = ModRecommendationLLM(
+            llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
+        response = recommender.recommend(
+            text=questionRequest.question,
+            mods=filtered_mod_brief_introductions
+        )
+    else:
+        # chat with llm
+        context = __retrieve(
+            extractedInfo=extractedInfo,
+            text=questionRequest.question)
+        rag = RAGLLM(
+            llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
+        response = rag.chat(
+            question=questionRequest.question,
+            context=context)
+        
     logger.debug(f"context: {context}")
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),

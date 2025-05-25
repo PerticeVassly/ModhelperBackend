@@ -134,7 +134,7 @@ class SummarizeLLM():
         self.summarize_prompt = SummarizePrompt()
         self.retry_prompt = RetryPrompt()
         
-    def summarize(self, messages: list[MessageInfo], old_name: str) -> SummarizeTitle:
+    def summarize(self, messages: list[MessageInfo], old_name: str) -> SummarizedTitleInfo:
         prompt = self.summarize_prompt.render(messages=messages, old_name=old_name)
         response = self.llm_client.generate_response(prompt)
         summarized = self.check_and_convert(response)
@@ -146,14 +146,76 @@ class SummarizeLLM():
                 response = response.replace("```json", "").replace("```", "").strip()
             try:
                 response_loaded = json.loads(response)
-                is_valid = all(key in response_loaded for key in summarizeTitleExample.model_dump().keys())
+                is_valid = all(key in response_loaded for key in summarizeTitleInfoExample.model_dump().keys())
                 if is_valid:
-                    instance = SummarizeTitle.model_validate(response_loaded)
+                    instance = SummarizedTitleInfo.model_validate(response_loaded)
                     return instance
             except json.JSONDecodeError:
                 logger.error(f"JSON decode error: {response}")
                 pass
-            prompt = self.retry_prompt.render(summarizeTitleExample)
+            prompt = self.retry_prompt.render(summarizeTitleInfoExample)
             response = self.llm_client.generate_response(prompt)
         logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
+
+class CategoryLLM():
+    def __init__(self, 
+                 llm_client: LLMClient):
+        self.llm_client = llm_client
+        self.max_retry_count = 3
+        self.category_prompt = CategoryPrompt()
+
+    def categorize(self, text: str) -> CategoryInfo:
+        prompt = self.category_prompt.render(user_request=text)
+        response = self.llm_client.generate_response(prompt)
+        categories = self.check_and_convert(response)
+        return categories
+    
+    def check_and_convert(self, response: str) -> BaseModel:
+        for i in range(self.max_retry_count):
+            if (response.startswith("```json")):
+                response = response.replace("```json", "").replace("```", "").strip()
+            try:
+                response_loaded = json.loads(response)
+                is_valid = all(key in response_loaded for key in categoryInfoExample.model_dump().keys())
+                if is_valid:
+                    instance = CategoryInfo.model_validate(response_loaded)
+                    return instance
+            except json.JSONDecodeError:
+                logger.error(f"JSON decode error: {response}")
+                pass
+            prompt = self.retry_prompt.render(categoryInfoExample)
+            response = self.llm_client.generate_response(prompt)
+        logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
+
+class ModRecommendationLLM():
+    def __init__(self, 
+                 llm_client: LLMClient):
+        self.llm_client = llm_client
+        self.max_retry_count = 3
+        self.mod_recommendation_prompt = ModRecommendationPrompt()
+        self.retry_prompt = RetryPrompt()
+
+    def recommend(self, text: str, mods : List[ModBriefIntroduction]) -> ModRecommendationInfo:
+        prompt = self.mod_recommendation_prompt.render(user_request=text, mods=mods)
+        response = self.llm_client.generate_response(prompt)
+        # recommendations = self.check_and_convert(response)
+        # return recommendations
+        return response
+    
+    # def check_and_convert(self, response: str) -> BaseModel:
+    #     for i in range(self.max_retry_count):
+    #         if (response.startswith("```json")):
+    #             response = response.replace("```json", "").replace("```", "").strip()
+    #         try:
+    #             response_loaded = json.loads(response)
+    #             is_valid = all(key in response_loaded for key in modRecommendationInfoExample.model_dump().keys())
+    #             if is_valid:
+    #                 instance = ModRecommendationInfo.model_validate(response_loaded)
+    #                 return instance
+    #         except json.JSONDecodeError:
+    #             logger.error(f"JSON decode error: {response}")
+    #             pass
+    #         prompt = self.retry_prompt.render(modRecommendationInfoExample)
+    #         response = self.llm_client.generate_response(prompt)
+    #     logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
      

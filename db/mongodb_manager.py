@@ -189,6 +189,21 @@ class MetaInfoCollection:
             logger.error(f"Unknown document type: {metadata.type}")
             return None
 
+    def filter_mods(self, categories: list[str] = None) -> list[ModBriefIntroduction]:
+        query = {"categories": {"$in": categories}} if categories else {}
+        projection = {"mod_name": 1, "detail_page_url": 1, "introduction": 1, "categories": 1}
+        mods = list(self.collection.find(query, projection))
+
+        if categories:
+            category_set = set(categories)
+            def match_score(mod):
+                return len(set(mod.get("categories", [])) & category_set)
+            mods.sort(key=match_score, reverse=True)
+
+        return [ModBriefIntroduction(**mod) for mod in mods]
+
+
+
 usersRepository = UsersCollection()
 conversationsRepository = ConversationsCollection()
 messagesRepository = MessagesCollection()

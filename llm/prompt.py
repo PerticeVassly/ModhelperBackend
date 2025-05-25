@@ -95,6 +95,47 @@ class SummarizePrompt(Prompt):
         ans = self.template.format(
             old_name=old_name,
             conversation_messages="\n".join(f"user: {m.user_message}\nassistant: {m.assistant_message}" for m in messages),
-            format=json.dumps(summarizeTitleExample.model_dump(), ensure_ascii=False, indent=2)
+            format=json.dumps(summarizeTitleInfoExample.model_dump(), ensure_ascii=False, indent=2)
         )
+        return ans
+
+class CategoryPrompt(Prompt):
+    def __init__(self):
+        template = textwrap.dedent("""
+            请根据以下用户的要求，考虑对用户进行模组推荐。你需要从以下模组类别中选择一个或者多个类别来推荐模组。请严格按照以下json格式返回结果，不要有额外输出，格式如下例：
+            {format}
+            用户要求：{user_request}
+            可选模组类别：{categories}
+         """)
+        
+        super().__init__(template)
+    def render(self, user_request : str) -> str:
+        ans = self.template.format(
+            user_request=user_request,
+            categories=", ".join(all_category_names()),
+            format=json.dumps(categoryInfoExample.model_dump(), ensure_ascii=False, indent=2)
+        )
+        return ans
+
+
+class ModRecommendationPrompt(Prompt):
+    def __init__(self):
+        template = textwrap.dedent("""
+            请根据以下用户的要求，推荐一个或者多个模组。
+            用户要求：{user_request}
+            可选模组：{mods}
+         """)
+        
+        super().__init__(template)
+
+    def render(self, user_request : str, mods: List[ModBriefIntroduction]) -> str:
+        ans = self.template.format(
+            user_request=user_request,
+            mods=json.dumps(
+                [mod.model_dump() for mod in mods], 
+                ensure_ascii=False, 
+                indent=2
+            ),
+            # format=json.dumps(modRecommendationInfoExample.model_dump(), ensure_ascii=False, indent=2)
+        )       
         return ans

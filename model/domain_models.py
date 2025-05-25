@@ -42,8 +42,24 @@ class ExtractedInfo(BaseModel):
     stepBackQuestionAnswer: Optional[str] = None
 
 # summarizeTitle generate by summarize llm
-class SummarizeTitle(BaseModel):
+class SummarizedTitleInfo(BaseModel):
     title: str
+
+# categoryInfo generate by category llm
+class CategoryInfo(BaseModel):
+    categories : list[str] = []
+
+class RecommendationItem(BaseModel):
+    name: str
+    url: str
+    reason: str
+
+# ModRecommendationInfo generate by mod recommendation llm
+class ModRecommendationInfo(BaseModel):
+    recommendations: list[RecommendationItem] = []
+
+
+    
 
 
 
