@@ -15,7 +15,7 @@ async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo
     extractor = ExtractorLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
     extractedInfo = extractor.extract(input=questionRequest.question)
-    # TODO: try deploy a small llm to do this to save time ?
+    logger.info(f"extractedInfo: {extractedInfo}")
     if extractedInfo.is_mc: 
         return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
     else:
@@ -54,9 +54,6 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     # fetch history
     messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # retrieve context based on extracted info
-    logger.info(f"extractedInfo: {extractedInfo}")
-    
-
     if extractedInfo.intention == "mod_recommendation" or extractedInfo.intention == "pack_customization":
         context = []
         categorizer = CategoryLLM(
@@ -68,7 +65,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
         filtered_mod_brief_introductions = metaInfosRepository.filter_mods(
             categories=categoryInfo.categories,
         )
-        logger.info(f"filtered_mod_brief_introductions: {[mod.mod_name for mod in filtered_mod_brief_introductions]}")
+        logger.info(f"filtered_mod_names: {[mod.mod_name for mod in filtered_mod_brief_introductions]}")
         recommender = ModRecommendationLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
         response = recommender.recommend(
@@ -86,7 +83,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
             question=questionRequest.question,
             context=context)
         
-    logger.debug(f"context: {context}")
+    logger.info(f"contexts: {[ref.description for ref in context]}")
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
         user_message=questionRequest.question,
@@ -103,6 +100,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
         response=response,
         reference=context
     )
+
 def handle_create_conversation(request: CreateConversationRequest, userInfo : UserInfo) -> CreateConversationResponse:
     result = conversationsRepository.insert_one(conversation=ConversationInfo(
         user_id=ObjectId(userInfo.id),
@@ -187,7 +185,6 @@ def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) 
         match for mod_name in extractedInfo.extraction_fields.mods
         if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None
     ]
-    logger.info(f"std_mod_names: {std_mod_names}")
     std_item_names = [
         match for item_name in extractedInfo.extraction_fields.items
         if (match := __fuzzy_match(query=item_name, candidates=all_item_names, threshold=90)) is not None
@@ -204,6 +201,7 @@ def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) 
         match for structure_name in extractedInfo.extraction_fields.structures
         if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=90)) is not None
     ]
+    logger.info(f"std_names_matched: mod={std_mod_names}, item={std_item_names}, biome={std_boime_names}, entity={std_entity_names}, structure={std_structure_names}")
 
     def __adjust_score(entry: Entry) -> float:
         base_score = entry.distance
@@ -234,11 +232,10 @@ def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) 
     # rerank
     entries = sorted(entries, key=lambda x: __adjust_score(x), reverse = True)
    
-    logger.info(f"rerank entries: {entries}")
+    logger.info(f"rerank entries names: {[entry.metadata.document_name for entry in entries]}")
     references : list[Reference] = []
 
     # if there is no std_name matched use the retrieved entries
-
     num_extra = 2
     entries = entries[:num_extra]
     full_documents_map = {}

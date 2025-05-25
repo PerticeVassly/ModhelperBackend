@@ -136,6 +136,5 @@ class ModRecommendationPrompt(Prompt):
                 ensure_ascii=False, 
                 indent=2
             ),
-            # format=json.dumps(modRecommendationInfoExample.model_dump(), ensure_ascii=False, indent=2)
         )       
         return ans

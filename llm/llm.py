@@ -198,24 +198,6 @@ class ModRecommendationLLM():
     def recommend(self, text: str, mods : List[ModBriefIntroduction]) -> ModRecommendationInfo:
         prompt = self.mod_recommendation_prompt.render(user_request=text, mods=mods)
         response = self.llm_client.generate_response(prompt)
-        # recommendations = self.check_and_convert(response)
-        # return recommendations
         return response
     
-    # def check_and_convert(self, response: str) -> BaseModel:
-    #     for i in range(self.max_retry_count):
-    #         if (response.startswith("```json")):
-    #             response = response.replace("```json", "").replace("```", "").strip()
-    #         try:
-    #             response_loaded = json.loads(response)
-    #             is_valid = all(key in response_loaded for key in modRecommendationInfoExample.model_dump().keys())
-    #             if is_valid:
-    #                 instance = ModRecommendationInfo.model_validate(response_loaded)
-    #                 return instance
-    #         except json.JSONDecodeError:
-    #             logger.error(f"JSON decode error: {response}")
-    #             pass
-    #         prompt = self.retry_prompt.render(modRecommendationInfoExample)
-    #         response = self.llm_client.generate_response(prompt)
-    #     logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
      
