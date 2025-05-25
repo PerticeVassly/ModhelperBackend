@@ -98,3 +98,63 @@ class Entry(BaseModel):
     metadata: DocumentMetadata
     distance: float
     score : float
+
+from enum import Enum
+
+class Category(Enum):
+    TECH = "科技"
+    MAGIC = "魔法"
+    ADVENTURE = "冒险"
+    FARMING = "农业"
+    DECORATION = "装饰"
+    SECURITY = "安全"
+    TIB = "TIB"
+    RESOURCE = "资源"
+    WORLD = "世界"
+    BIOMES = "群系"
+    CREATURE = "生物"
+    ENERGY = "能源"
+    STORAGE = "存储"
+    LOGISTICS = "物流"
+    ITEM = "道具"
+    REDSTONE = "红石"
+    FOOD = "食物"
+    MODEL = "模型"
+    GUIDE = "指南"
+    DESTRUCTION = "破坏"
+    OVERHAUL = "魔改"
+    MEME = "meme"
+    UTILITY = "实用"
+    SUPPORT = "辅助"
+    CHINESE_STYLE = "中式"
+    JAPANESE_STYLE = "日式"
+    WESTERN_STYLE = "西式"
+    HORROR = "恐怖"
+    BUILDING = "建材"
+    SURVIVAL = "生存"
+    COMMAND = "指令"
+    OPTIMIZATION = "优化"
+    CHINA_ORIGIN = "国创"
+    LEVEL = "关卡"
+    STRUCTURE = "结构"
+
+class ModBriefIntroduction(BaseModel):
+    mod_name: str
+    categories: list[str] = []
+    introduction: str
+    detail_page_url : str
+
+def str_to_category(value: str) -> Category:
+    for category in Category:
+        if category.value == value:
+            return category
+    return ""
+
+def category_to_str(category: Category) -> str:
+    if not isinstance(category, Category):
+        return ""
+    return category.value
+
+def all_category_names() -> list[str]:
+    return [c.value for c in Category]
+

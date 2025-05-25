@@ -1,6 +1,6 @@
 from model import *
 
-summarizeTitleExample = SummarizeTitle(
+summarizeTitleInfoExample = SummarizedTitleInfo(
     title="复用或生成的标题"
 )
 
@@ -17,4 +17,15 @@ extractedInfoExample = ExtractedInfo(
     answer="回答",
     stepBackQuestion="退后提示的问题",
     stepBackQuestionAnswer="退后提示的问题的回答"
+)
+
+categoryInfoExample = CategoryInfo(
+    categories=["category1", "category2"]
+)
+
+modRecommendationInfoExample = ModRecommendationInfo(
+    recommendations=[
+        RecommendationItem(name="mod1", url="http://example.com/mod1", reason="推荐理由1"),
+        RecommendationItem(name="mod2", url="http://example.com/mod2", reason="推荐理由2")
+    ]
 )
