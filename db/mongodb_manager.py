@@ -122,11 +122,14 @@ class MetaInfoCollection:
                     item_names.append(item["name"])
         return item_names
     
-    def find_item_by_name(self, name: str) -> GeneralItem:
-        item = self.collection.find_one({"items.name": name}, {"items.$": 1})
-        if item and "items" in item:
-            return GeneralItem.model_validate(item["items"][0])
-        return None
+    def find_item_by_name(self, name: str) -> tuple[GeneralItem, str]:
+        doc = self.collection.find_one({"items.name": name})
+        if doc and "items" in doc:
+            for item in doc["items"]:
+                if item.get("name") == name:
+                    return GeneralItem.model_validate(item), doc["mod_name"]
+        return None, None
+        
     
     def find_all_biome_names(self):
         mods = self.collection.find({}, {"biomes.name": 1, "_id": 0})
@@ -138,9 +141,11 @@ class MetaInfoCollection:
         return biome_names
     
     def find_biome_by_name(self, name: str) -> GeneralItem:
-        biome = self.collection.find_one({"biomes.name": name}, {"biomes.$": 1})
-        if biome and "biomes" in biome:
-            return GeneralItem.model_validate(biome["biomes"][0])
+        doc = self.collection.find_one({"biomes.name": name})
+        if doc and "biomes" in doc:
+            for biome in doc["biomes"]:
+                if biome.get("name") == name:
+                    return GeneralItem.model_validate(biome), doc["mod_name"]
         return None
     
     def find_all_entity_names(self):
@@ -153,9 +158,11 @@ class MetaInfoCollection:
         return entity_names
     
     def find_entity_by_name(self, name: str) -> GeneralItem:
-        entity = self.collection.find_one({"entities.name": name}, {"entities.$": 1})
-        if entity and "entities" in entity:
-            return GeneralItem.model_validate(entity["entities"][0])
+        doc = self.collection.find_one({"entities.name": name})
+        if doc and "entities" in doc:
+            for entity in doc["entities"]:
+                if entity.get("name") == name:
+                    return GeneralItem.model_validate(entity), doc["mod_name"]
         return None
     
     def find_all_structure_names(self):
@@ -168,10 +175,12 @@ class MetaInfoCollection:
         return structure_names
     
     def find_structure_by_name(self, name: str) -> GeneralItem:
-        structure = self.collection.find_one({"structures.name": name}, {"structures.$": 1})
-        if structure and "structures" in structure:
-            return GeneralItem.model_validate(structure["structures"][0])
-        return None 
+        doc = self.collection.find_one({"structures.name": name})
+        if doc and "structures" in doc:
+            for structure in doc["structures"]:
+                if structure.get("name") == name:
+                    return GeneralItem.model_validate(structure), doc["mod_name"]
+        return None
 
     def find_full_document_by_metadata(self, metadata: DocumentMetadata) -> str:
         if metadata.type == DocumentEnum.introduction:
