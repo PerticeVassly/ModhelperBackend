@@ -9,6 +9,7 @@ class UserInfo(BaseModel):
     username: str
     email : EmailStr
     password : str
+    favorite_mods : list[str] = []
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

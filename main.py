@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # import routers
 from api import auth_router
 from api import question_router
+from api import mod_router
 
 # import config
 from config import settings, setup_logging
@@ -25,6 +26,7 @@ app.add_middleware(
 
 app.include_router(question_router)
 app.include_router(auth_router)
+app.include_router(mod_router)
 
 setup_logging()
 

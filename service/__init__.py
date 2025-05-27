@@ -5,6 +5,7 @@ def get_exportable(module):
 
 from .question_service import *
 from .auth_service import *
+from .mod_service import *
 
 import sys
 __all__ = get_exportable(sys.modules[__name__])

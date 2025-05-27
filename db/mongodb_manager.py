@@ -39,6 +39,28 @@ class UsersCollection:
             logger.error(f"Error inserting user: {e}")
             return None
 
+    def toggle_favorite_mod(self, user_id: ObjectId, mod_id: str) -> str | None:
+        user = self.find_one(user_id)
+        if not user:
+            logger.error(f"用户 {user_id} 未找到")
+            return None
+        if mod_id in user.favorite_mods:
+            result = self.collection.update_one(
+                {"_id": user_id},
+                {"$pull": {"favorite_mods": mod_id}}
+            )
+            if result.modified_count > 0:
+                return "Removed from favorites"
+        else:
+            result = self.collection.update_one(
+                {"_id": user_id},
+                {"$addToSet": {"favorite_mods": mod_id}}
+            )
+            if result.modified_count > 0:
+                return "Added to favorites"
+        logger.error("Failed to toggle favorite mod")
+        return None
+
 class ConversationsCollection:
     def __init__(self):
         self.collection = db["conversations"]
@@ -108,6 +130,7 @@ class MetaInfoCollection:
                 return True
         else:
             self.collection.insert_one(mod.model_dump())
+            return True
 
     def find_all_mod_names(self):
         mods = self.collection.find({}, {"mod_name": 1, "_id": 0})
@@ -210,6 +233,46 @@ class MetaInfoCollection:
             mods.sort(key=match_score, reverse=True)
 
         return [ModBriefIntroduction(**mod) for mod in mods]
+
+    def find_all_mod_vo(self) -> list[ModVO]:
+        mods = self.collection.find({}, {
+            "mod_name": 1,
+            "introduction": 1,
+            "detail_page_url": 1,
+            "_id": 1
+        })
+        result = []
+        for mod in mods:
+            vo = ModVO(
+                id=str(mod["_id"]),
+                name=mod.get("mod_name", ""),
+                description=mod.get("introduction", ""),
+                url=mod.get("detail_page_url", ""),
+                isFavorite=False  # 这里暂时默认False
+            )
+            result.append(vo)
+        return result
+
+    def delete_mod_by_id(self, mod_id: str) -> str | None:
+        try:
+            mod = self.collection.find_one({"_id": ObjectId(mod_id)})
+            if not mod:
+                return None
+            mod_name = mod.get("mod_name")
+            result = self.collection.delete_one({"_id": ObjectId(mod_id)})
+            if result.deleted_count > 0:
+                return mod_name
+            return None
+        except Exception as e:
+            logger.error(f"删除 mod 失败: {e}")
+            return False
+
+    def exists_by_id(self, mod_id: str) -> bool:
+        try:
+            return self.collection.find_one({"_id": ObjectId(mod_id)}) is not None
+        except Exception as e:
+            logger.error(f"检查 mod 是否存在时出错: {e}")
+            return False
 
 
 
