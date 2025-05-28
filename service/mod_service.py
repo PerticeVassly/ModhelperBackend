@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from model import *
-from db import metaInfosRepository, usersRepository, all_mod_names
+from db import metaInfosRepository, usersRepository
+import db.global_vars as global_vars
 import logging
 
 
@@ -15,14 +16,15 @@ def handle_get_mods(userInfo: UserInfo) -> GetModResponse:
     return GetModResponse(mods=mods)
 
 def handle_add_mod(mod: Mod) -> AddModResponse:
-    if mod.mod_name in all_mod_names:
+    if mod.mod_name in global_vars.all_mod_names:
         raise HTTPException(status_code=400, detail="Mod already exists")
 
     result = metaInfosRepository.insert_one(mod)
     if not result:
         raise HTTPException(status_code=500, detail="Failed to add mod")
 
-    all_mod_names.append(mod.mod_name)
+    # all_mod_names.append(mod.mod_name)
+    global_vars.refresh_all_names()
 
     logger.info(f"Mod {mod.mod_name} added successfully")
     return AddModResponse(message="Mod added successfully")
@@ -36,8 +38,9 @@ def handle_delete_mod(mod_id: str) -> DeleteModResponse:
     if not mod_name:
         raise HTTPException(status_code=500, detail="Failed to delete mod")
 
-    if mod_name in all_mod_names:
-        all_mod_names.remove(mod_name)
+    # if mod_name in all_mod_names:
+    #     all_mod_names.remove(mod_name)
+    global_vars.refresh_all_names()
 
     logger.info(f"Mod with ID {mod_id} deleted successfully")
     return DeleteModResponse(message="Mod deleted successfully")
