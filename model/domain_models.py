@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Literal
 from typing import Optional
 from typing import Union
+from .db_models import Mod
 
 # retrieved reference
 class Reference(BaseModel):
@@ -59,11 +60,8 @@ class ModRecommendationInfo(BaseModel):
     recommendations: list[RecommendationItem] = []
 
 # 暂无作者信息
-class ModVO(BaseModel):
+class ModVO(Mod):
     id: str
-    name: str
-    description: str
-    url: str
     isFavorite: bool
 
     

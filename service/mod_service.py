@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from model import *
-from db import metaInfosRepository, usersRepository
+from db import metaInfosRepository, usersRepository, vectorDB
 import db.global_vars as global_vars
 import logging
 
@@ -22,25 +22,44 @@ def handle_add_mod(mod: Mod) -> AddModResponse:
     result = metaInfosRepository.insert_one(mod)
     if not result:
         raise HTTPException(status_code=500, detail="Failed to add mod")
-
-    # all_mod_names.append(mod.mod_name)
     global_vars.refresh_all_names()
 
+    vectorDB.add(
+        raw_text=mod["introduction"],
+        metadata=DocumentMetadata(
+            document_name=mod["mod_name"] + " introduction",
+            url=mod["detail_page_url"],
+            type=DocumentEnum.introduction,
+            mod_name=mod["mod_name"],
+        ),
+        overwrite=True
+    )
+    for guide in mod["guides"]:
+        vectorDB.add(
+            raw_text=guide["content"],
+            metadata=DocumentMetadata(
+                document_name=guide["guide_name"],
+                url=guide["guide_page_url"],
+                type=DocumentEnum.guide,
+                mod_name=mod["mod_name"],
+            ),
+            overwrite=True
+        )
     logger.info(f"Mod {mod.mod_name} added successfully")
     return AddModResponse(message="Mod added successfully")
 
 def handle_delete_mod(mod_id: str) -> DeleteModResponse:
-    if not metaInfosRepository.exists_by_id(mod_id):
-        logger.info(mod_id)
+    mod = metaInfosRepository.find_by_id(mod_id)
+    if not mod:
         raise HTTPException(status_code=404, detail=f"Mod not found{mod_id}")
-
     mod_name = metaInfosRepository.delete_mod_by_id(mod_id)
     if not mod_name:
         raise HTTPException(status_code=500, detail="Failed to delete mod")
-
-    # if mod_name in all_mod_names:
-    #     all_mod_names.remove(mod_name)
     global_vars.refresh_all_names()
+
+    res = vectorDB.delete_by_mod(mod)
+    if not res:
+        raise HTTPException(status_code=500, detail="Failed to delete mod documents from vectorDB")
 
     logger.info(f"Mod with ID {mod_id} deleted successfully")
     return DeleteModResponse(message="Mod deleted successfully")

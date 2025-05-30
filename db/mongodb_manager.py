@@ -235,22 +235,13 @@ class MetaInfoCollection:
         return [ModBriefIntroduction(**mod) for mod in mods]
 
     def find_all_mod_vo(self) -> list[ModVO]:
-        mods = self.collection.find({}, {
-            "mod_name": 1,
-            "introduction": 1,
-            "detail_page_url": 1,
-            "_id": 1
-        })
+        mods = self.collection.find({})
         result = []
         for mod in mods:
-            vo = ModVO(
-                id=str(mod["_id"]),
-                name=mod.get("mod_name", ""),
-                description=mod.get("introduction", ""),
-                url=mod.get("detail_page_url", ""),
-                isFavorite=False  # 这里暂时默认False
-            )
-            result.append(vo)
+            mod_vo_dict = mod.copy()
+            mod_vo_dict["id"] = str(mod_vo_dict.pop("_id"))
+            mod_vo_dict["isFavorite"] = False
+            result.append(ModVO.model_validate(mod_vo_dict))
         return result
 
     def delete_mod_by_id(self, mod_id: str) -> str | None:
@@ -265,14 +256,20 @@ class MetaInfoCollection:
             return None
         except Exception as e:
             logger.error(f"删除 mod 失败: {e}")
-            return False
+            return None
 
-    def exists_by_id(self, mod_id: str) -> bool:
+    def find_by_id(self, mod_id: str) -> Mod | None:
         try:
-            return self.collection.find_one({"_id": ObjectId(mod_id)}) is not None
+            mod = self.collection.find_one({"_id": ObjectId(mod_id)})
+            if not mod:
+                logger.error("Mod not found")
+                return None
+            mod = dict(mod)
+            mod.pop("_id", None)
+            return Mod.model_validate(mod)
         except Exception as e:
-            logger.error(f"检查 mod 是否存在时出错: {e}")
-            return False
+            logger.error(f"获取 mod 失败: {e}")
+            return None
 
 
 

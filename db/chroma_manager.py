@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from config import settings
 from pathlib import Path
 from .embedding import gen_embedding, split_text
-from model import DocumentMetadata, Entry
+from model import DocumentMetadata, Entry, Mod
 
 logger = logging.getLogger("database")
 
@@ -80,6 +80,39 @@ class ChromaVectorDB:
                 results["distances"][0]
             )
         ]
+
+    def delete_by_mod(self, mod: Mod) -> bool:
+        try:
+            mod_name = mod.mod_name
+            ids_to_delete = []
+
+            # 删除 introduction
+            intro_chunks = split_text(mod_name + " introduction" + mod.introduction)
+            ids_to_delete.extend([
+                mod_name + mod_name + " introduction" + str(i)
+                for i in range(len(intro_chunks))
+            ])
+
+            # 删除 guides
+            for guide in mod.guides:
+                guide_name = guide.guide_name
+                guide_chunks = split_text(guide_name + guide.content)
+                ids_to_delete.extend([
+                    mod_name + guide_name + str(i)
+                    for i in range(len(guide_chunks))
+                ])
+
+            if not ids_to_delete:
+                logger.info(f"[ChromaDB] 未找到 mod_name={mod_name} 的任何分块，无需删除。")
+                return True
+
+            self.collection.delete(ids=ids_to_delete)
+            logger.info(f"[ChromaDB] 已删除 mod_name={mod_name} 的 {len(ids_to_delete)} 个分块。")
+            return True
+        except Exception as e:
+            logger.error(f"[ChromaDB] 删除 mod_name={getattr(mod, 'mod_name', None)} 相关分块时出错: {e}")
+            return False
+
     
     def __del__(self):
         logger.info("ChromaVectorDB instance deleted.")
