@@ -5,8 +5,8 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/mod")
 
 @router.get("/list", response_model = GetModResponse)
-def get_mods(userInfo: UserInfo = Depends(get_current_user)) -> GetModResponse:
-    response = handle_get_mods(userInfo)
+def get_mods(page: int, page_size: int,userInfo: UserInfo = Depends(get_current_user)) -> GetModResponse:
+    response = handle_get_mods(userInfo, page, page_size)
     return response
 
 @router.post("/add", response_model = AddModResponse)

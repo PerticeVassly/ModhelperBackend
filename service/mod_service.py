@@ -7,8 +7,8 @@ import logging
 
 logger = logging.getLogger("service")
 
-def handle_get_mods(userInfo: UserInfo) -> GetModResponse:
-    mods = metaInfosRepository.find_all_mod_vo()
+def handle_get_mods(userInfo: UserInfo, page: int = 1, page_size: int = 20) -> GetModResponse:
+    mods = metaInfosRepository.find_mod_by_page(page, page_size)
     favorite_mod_ids = set(userInfo.favorite_mods)
     for mod in mods:
         if mod.id in favorite_mod_ids:
@@ -57,7 +57,7 @@ def handle_delete_mod(mod_id: str) -> DeleteModResponse:
         raise HTTPException(status_code=500, detail="Failed to delete mod")
     global_vars.refresh_all_names()
 
-    res = vectorDB.delete_by_mod(mod)
+    res = vectorDB.delete_by_mod(mod.mod_name)
     if not res:
         raise HTTPException(status_code=500, detail="Failed to delete mod documents from vectorDB")
 

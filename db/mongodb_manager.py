@@ -234,8 +234,9 @@ class MetaInfoCollection:
 
         return [ModBriefIntroduction(**mod) for mod in mods]
 
-    def find_all_mod_vo(self) -> list[ModVO]:
-        mods = self.collection.find({})
+    def find_mod_by_page(self, page: int = 1, page_size: int = 20) -> list[ModVO]:
+        skip = (page - 1) * page_size
+        mods = self.collection.find({}).skip(skip).limit(page_size)
         result = []
         for mod in mods:
             mod_vo_dict = mod.copy()
