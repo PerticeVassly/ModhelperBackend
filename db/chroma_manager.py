@@ -33,7 +33,7 @@ class ChromaVectorDB:
             logger.info(f"Document {metadata.document_name} already exists in the database.")
             return
         summary =  metadata.document_name # TODO other way to generate summary
-        chunks = split_text(raw_text)
+        chunks = split_text(raw_text, max_length=320 - len(summary))
         embedded_chunks = [gen_embedding(summary + chunk) for chunk in chunks]    
         if embedded_chunks:
             try:
