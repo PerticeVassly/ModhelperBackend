@@ -26,13 +26,13 @@ class ExtractPrompt(Prompt):
             3. 如果是MC相关问题，判断问题的意图，从“模组基本信息查询”，“模组玩法攻略查询”，“模组推荐”，“整合包定制”，“其他”，五个意图中选择一个返回，分别使用 basic_info、gameplay_guide、mod_recommendation、pack_customization、other 表示；如果不是MCmod相关问题，返回空字符串即可
             返回格式例子如下, 请严格遵守：                       
             {format}
-            文本: {text}
+            文本: {question}
         """)
         super().__init__(template)
 
-    def render(self, text : str) -> str:       
+    def render(self, question : str) -> str:       
         ans = self.template.format(
-            text=text,
+            question=question,
             format=json.dumps(extracLLMResponseExample.model_dump(), ensure_ascii=False, indent=2)
         )
         return ans

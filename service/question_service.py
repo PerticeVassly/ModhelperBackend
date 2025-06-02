@@ -26,11 +26,11 @@ async def preProcess(question: str) -> PreProcessResult:
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
     
     tasks = [
-        classify_llm.classify(question=question),
-        extract_llm.extract(input=question),
-        intention_analyze_llm.analyze_intention(question=question),
-        hyde_llm.hyde(question=question),
-        set_back_llm.set_back(question=question)
+        lambda: classify_llm.classify(input=question),
+        lambda: extract_llm.extract(input=question),
+        lambda: intention_analyze_llm.analyze(input=question),
+        lambda: hyde_llm.hyde(input=question),
+        lambda: set_back_llm.set_back(input=question)
     ]
 
     results = await asyncio.gather(*(task() for task in tasks))
@@ -60,7 +60,7 @@ async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo 
     # chat with llm
     non_rag = NonRAGLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
-    response = non_rag.chat(question=questionRequest.question)
+    response = await non_rag.chat(question=questionRequest.question)
     # save message
     new_message = MessageInfo(
         conversation_id=ObjectId(questionRequest.conversation_id),
@@ -110,7 +110,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
             text=questionRequest.question)
         rag = RAGLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
-        response = rag.chat(
+        response = await rag.chat(
             question=questionRequest.question,
             context=context)
         
@@ -188,7 +188,7 @@ async def __summarize(messages : list[MessageInfo], concersation_id : str) -> No
     conversation = conversationsRepository.find_one(ObjectId(concersation_id))
     llm = SummarizeLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
-    summarizeTitle = llm.summarize(messages=messages, old_name=conversation.title)
+    summarizeTitle = await llm.summarize(messages=messages, old_name=conversation.title)
     new_title = summarizeTitle.title
     # save new title
     conversationsRepository.update_ones_title(
