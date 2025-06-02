@@ -40,16 +40,69 @@ class ExtractPrompt(Prompt):
 # 将extractor prompt的各个功能分解，包括问题意图，实体信息，HyDe，回退搜索，领域判断
 
 # 判断是不是mc特定模组相关信息
-# class ClassifyPrompt(Prompt):
-#     def __init__(self):
-#         template = textwrap.dedent("""
-#             请判断以下问题是否是Minecraft/我的世界/MC特定模组相关问题，使用0/1表示。
-#             问题：{question}
-#         """)
-#         super().__init__(template)
+class ClassifyPrompt(Prompt):
+    def __init__(self):
+        template = textwrap.dedent("""
+            请判断以下问题是否是Minecraft/我的世界/MC特定模组相关问题，使用0/1表示。
+            问题：{question}
+            返回格式例子如下, 请严格遵守：
+            {format}
+        """)
+        super().__init__(template)
 
-#     def render(self, question: str) -> str:
-#         return self.template.format(question=question)
+    def render(self, question: str) -> str:
+        ans = self.template.format(
+            question=question,
+            format=json.dumps(classifyLLMResponseExample.model_dump(), ensure_ascii=False, indent=2)
+        )
+        return ans
+    
+class IntentionAnalyzePrompt(Prompt):
+    def __init__(self):
+        template = textwrap.dedent("""
+            请分析以下问题的意图，从“模组基本信息查询”，“模组玩法攻略查询”，“模组推荐”，“整合包定制”，“其他”，五个意图中选择一个返回，分别使用 basic_info、gameplay_guide、mod_recommendation、pack_customization、other 表示；如果不是MCmod相关问题，返回空字符串即可。
+            问题：{question}
+            返回格式例子如下, 请严格遵守：
+            {format}
+        """)
+        super().__init__(template)
+
+    def render(self, question: str) -> str:
+        ans = self.template.format(
+            question=question,
+            format=json.dumps(intentionAnalyzeLLMResponseExample.model_dump(), ensure_ascii=False, indent=2)
+        )
+        return ans
+    
+class HyDEPrompt(Prompt):
+    def __init__(self):
+        template = textwrap.dedent("""
+            {question}
+        """)
+        super().__init__(template)
+
+    def render(self, question: str) -> str:
+        ans = self.template.format(
+            question=question
+        )
+        return ans
+    
+class SetBackPrompt(Prompt):
+    def __init__(self):
+        template = textwrap.dedent("""
+            请根据以下问题和回答，生成一个回退问题和回退问题的回答。
+            问题：{question}
+            返回格式例子如下, 请严格遵守：
+            {format}
+        """)
+        super().__init__(template)
+
+    def render(self, question: str) -> str:
+        ans = self.template.format(
+            question=question,
+            format=json.dumps(setBackLLMResponseExample.model_dump(), ensure_ascii=False, indent=2)
+        )
+        return ans
 
 class RetryPrompt(Prompt):
     def __init__(self):

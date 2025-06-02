@@ -100,6 +100,128 @@ class ExtractLLM():
             response = self.llm_client.generate_response(prompt)
         logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
 
+class ClassifyLLM():
+    def __init__(self, 
+                 llm_client: LLMClient):
+        self.max_retry_count = 3
+        self.llm_client = llm_client
+        self.classify_prompt = ClassifyPrompt()
+
+    def classify(self, text: str) -> ClassifyLLMResponse:
+        prompt = self.classify_prompt.render(user_request=text)
+        response = self.llm_client.generate_response(prompt)
+        classified = self.check_and_convert(response)
+        return classified
+    
+    def check_and_convert(self, response: str) -> BaseModel:
+        for i in range(self.max_retry_count):
+            if (response.startswith("```json")):
+                response = response.replace("```json", "").replace("```", "").strip()
+            try:
+                response_loaded = json.loads(response)
+                is_valid = all(key in response_loaded for key in classifyLLMResponseExample.model_dump().keys())
+                if is_valid:
+                    instance = ClassifyLLMResponse.model_validate(response_loaded)
+                    return instance
+            except json.JSONDecodeError:
+                logger.error(f"JSON decode error: {response}")
+                pass
+            prompt = self.retry_prompt.render(classifyLLMResponseExample)
+            response = self.llm_client.generate_response(prompt)
+        logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
+    
+class IntentionAnalyzeLLM():
+    def __init__(self, 
+                 llm_client: LLMClient):
+        self.max_retry_count = 3
+        self.llm_client = llm_client
+        self.intention_analyze_prompt = IntentionAnalyzePrompt()
+
+    def analyze(self, question: str) -> IntentionAnalyzeLLMResponse:
+        prompt = self.intention_analyze_prompt.render(question=question)
+        response = self.llm_client.generate_response(prompt)
+        analyzed = self.check_and_convert(response)
+        return analyzed
+    
+    def check_and_convert(self, response: str) -> BaseModel:
+        for i in range(self.max_retry_count):
+            if (response.startswith("```json")):
+                response = response.replace("```json", "").replace("```", "").strip()
+            try:
+                response_loaded = json.loads(response)
+                is_valid = all(key in response_loaded for key in intentionAnalyzeLLMResponseExample.model_dump().keys())
+                if is_valid:
+                    instance = IntentionAnalyzeLLMResponse.model_validate(response_loaded)
+                    return instance
+            except json.JSONDecodeError:
+                logger.error(f"JSON decode error: {response}")
+                pass
+            prompt = self.retry_prompt.render(intentionAnalyzeLLMResponseExample)
+            response = self.llm_client.generate_response(prompt)
+        logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
+    
+class HyDELLM():
+    def __init__(self, 
+                 llm_client: LLMClient):
+        self.max_retry_count = 3
+        self.llm_client = llm_client
+        self.hyde_prompt = HyDEPrompt()
+        self.retry_prompt = RetryPrompt()
+
+    def hyde(self, question: str) -> HyDELLMResponse:
+        prompt = self.hyde_prompt.render(question=question)
+        response = self.llm_client.generate_response(prompt)
+        hyde_response = self.check_and_convert(response)
+        return hyde_response
+    
+    def check_and_convert(self, response: str) -> BaseModel:
+        for i in range(self.max_retry_count):
+            if (response.startswith("```json")):
+                response = response.replace("```json", "").replace("```", "").strip()
+            try:
+                response_loaded = json.loads(response)
+                is_valid = all(key in response_loaded for key in HyDELLMResponseExample.model_dump().keys())
+                if is_valid:
+                    instance = HyDELLMResponse.model_validate(response_loaded)
+                    return instance
+            except json.JSONDecodeError:
+                logger.error(f"JSON decode error: {response}")
+                pass
+            prompt = self.retry_prompt.render(HyDELLMResponseExample)
+            response = self.llm_client.generate_response(prompt)
+        logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
+
+class SetBackLLM():
+    def __init__(self, 
+                 llm_client: LLMClient):
+        self.max_retry_count = 3
+        self.llm_client = llm_client
+        self.set_back_prompt = SetBackPrompt()
+        self.retry_prompt = RetryPrompt()
+
+    def set_back(self, question: str) -> SetBackLLMResponse:
+        prompt = self.set_back_prompt.render(question=question)
+        response = self.llm_client.generate_response(prompt)
+        set_back_response = self.check_and_convert(response)
+        return set_back_response
+    
+    def check_and_convert(self, response: str) -> BaseModel:
+        for i in range(self.max_retry_count):
+            if (response.startswith("```json")):
+                response = response.replace("```json", "").replace("```", "").strip()
+            try:
+                response_loaded = json.loads(response)
+                is_valid = all(key in response_loaded for key in setBackLLMResponseExample.model_dump().keys())
+                if is_valid:
+                    instance = SetBackLLMResponse.model_validate(response_loaded)
+                    return instance
+            except json.JSONDecodeError:
+                logger.error(f"JSON decode error: {response}")
+                pass
+            prompt = self.retry_prompt.render(setBackLLMResponseExample)
+            response = self.llm_client.generate_response(prompt)
+        logger.error(f"Failed to parse response after {self.max_retry_count} attempts.")
+
 class NonRAGLLM():
     def __init__(self, 
                  llm_client: LLMClient):

@@ -5,7 +5,6 @@ summarizeLLMResponseExample = SummarizeLLMResponse(
 )
 
 extracLLMResponseExample = ExtractorLLMResponse(
-    is_mc=1,
     extraction_fields=ExtractedFields(
         mods=["mod1", "mod2"],
         items=["item1", "item2"],
@@ -13,10 +12,23 @@ extracLLMResponseExample = ExtractorLLMResponse(
         biomes=["biome1", "biome2"],
         structures=["structure1", "structure2"]
     ),
-    intention=intentionEnum.basic_info,
-    answer="回答",
-    stepBackQuestion="退后提示的问题",
-    stepBackQuestionAnswer="退后提示的问题的回答"
+)
+
+classifyLLMResponseExample = ClassifyLLMResponse(
+    is_mc=1
+)
+
+intentionAnalyzeLLMResponseExample = IntentionAnalyzeLLMResponse(
+    intention=intentionEnum.gameplay_guide
+)
+
+HyDELLMResponseExample = HyDELLMResponse(
+    hyde_answer="HyDE回答"
+)
+
+setBackLLMResponseExample = SetBackLLMResponse(
+    step_back_question="退后问题",
+    step_back_answer="退后问题的回答"
 )
 
 categorizeLLMResponseExample = CategorizeLLMResponse(

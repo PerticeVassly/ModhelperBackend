@@ -34,12 +34,22 @@ class ExtractedFields(BaseModel):
     structures : list[str] = []
 
 class ExtractorLLMResponse(BaseModel):
-    is_mc: Literal[0, 1]
     extraction_fields: Optional[ExtractedFields]
-    intention: Union[intentionEnum, Literal[''], None]
-    answer: Optional[str] = None
-    stepBackQuestion: Optional[str] = None
-    stepBackQuestionAnswer: Optional[str] = None
+
+# classifyLLMResponse generate by classify llm
+class ClassifyLLMResponse(BaseModel):
+    is_mc: Literal[0, 1] = 0
+
+class IntentionAnalyzeLLMResponse(BaseModel):
+    intention: Union[intentionEnum, Literal[''], None] = None
+
+class HyDELLMResponse(BaseModel):
+    hyde_answer: Optional[str] = None
+
+class SetBackLLMResponse(BaseModel):
+    step_back_question: Optional[str] = None
+    step_back_answer: Optional[str] = None
+
 
 # summarizeTitle generate by summarize llm
 class SummarizeLLMResponse(BaseModel):
