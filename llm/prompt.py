@@ -16,7 +16,7 @@ class Prompt(ABC):
     def render(self, kwargs : list[str]) -> str:
         pass
 
-class ExtractorPrompt(Prompt):
+class ExtractPrompt(Prompt):
 
     def __init__(self):
         template = textwrap.dedent("""
@@ -33,9 +33,23 @@ class ExtractorPrompt(Prompt):
     def render(self, text : str) -> str:       
         ans = self.template.format(
             text=text,
-            format=json.dumps(extractedInfoExample.model_dump(), ensure_ascii=False, indent=2)
+            format=json.dumps(extracLLMResponseExample.model_dump(), ensure_ascii=False, indent=2)
         )
         return ans
+
+# 将extractor prompt的各个功能分解，包括问题意图，实体信息，HyDe，回退搜索，领域判断
+
+# 判断是不是mc特定模组相关信息
+# class ClassifyPrompt(Prompt):
+#     def __init__(self):
+#         template = textwrap.dedent("""
+#             请判断以下问题是否是Minecraft/我的世界/MC特定模组相关问题，使用0/1表示。
+#             问题：{question}
+#         """)
+#         super().__init__(template)
+
+#     def render(self, question: str) -> str:
+#         return self.template.format(question=question)
 
 class RetryPrompt(Prompt):
     def __init__(self):
@@ -95,11 +109,11 @@ class SummarizePrompt(Prompt):
         ans = self.template.format(
             old_name=old_name,
             conversation_messages="\n".join(f"user: {m.user_message}\nassistant: {m.assistant_message}" for m in messages),
-            format=json.dumps(summarizeTitleInfoExample.model_dump(), ensure_ascii=False, indent=2)
+            format=json.dumps(summarizeLLMResponseExample.model_dump(), ensure_ascii=False, indent=2)
         )
         return ans
 
-class CategoryPrompt(Prompt):
+class CategorizePrompt(Prompt):
     def __init__(self):
         template = textwrap.dedent("""
             请根据以下用户的要求，考虑对用户进行模组推荐。你需要从以下模组类别中选择一个或者多个类别来推荐模组。请严格按照以下json格式返回结果，不要有额外输出，格式如下例：
@@ -113,12 +127,12 @@ class CategoryPrompt(Prompt):
         ans = self.template.format(
             user_request=user_request,
             categories=", ".join(all_category_names()),
-            format=json.dumps(categoryInfoExample.model_dump(), ensure_ascii=False, indent=2)
+            format=json.dumps(categorizeLLMResponseExample.model_dump(), ensure_ascii=False, indent=2)
         )
         return ans
 
 
-class ModRecommendationPrompt(Prompt):
+class ModRecommendPrompt(Prompt):
     def __init__(self):
         template = textwrap.dedent("""
             请根据以下用户的要求，推荐一个或者多个模组。

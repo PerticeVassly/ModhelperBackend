@@ -1,10 +1,10 @@
 from model import *
 
-summarizeTitleInfoExample = SummarizedTitleInfo(
+summarizeLLMResponseExample = SummarizeLLMResponse(
     title="复用或生成的标题"
 )
 
-extractedInfoExample = ExtractedInfo(
+extracLLMResponseExample = ExtractorLLMResponse(
     is_mc=1,
     extraction_fields=ExtractedFields(
         mods=["mod1", "mod2"],
@@ -19,11 +19,11 @@ extractedInfoExample = ExtractedInfo(
     stepBackQuestionAnswer="退后提示的问题的回答"
 )
 
-categoryInfoExample = CategoryInfo(
+categorizeLLMResponseExample = CategorizeLLMResponse(
     categories=["category1", "category2"]
 )
 
-modRecommendationInfoExample = ModRecommendationInfo(
+modRecommendLLMResponseExample = ModRecommendLLMResponse(
     recommendations=[
         RecommendationItem(name="mod1", url="http://example.com/mod1", reason="推荐理由1"),
         RecommendationItem(name="mod2", url="http://example.com/mod2", reason="推荐理由2")

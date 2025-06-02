@@ -1,4 +1,4 @@
-from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractorLLM, SummarizeLLM, CategoryLLM, ModRecommendationLLM
+from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractLLM, SummarizeLLM, CategorizeLLM, ModRecommendLLM
 from db import conversationsRepository, messagesRepository, metaInfosRepository, vectorDB, all_mod_names, all_item_names, all_entity_names, all_structure_names, all_biome_names
 from model import *
 from bson import ObjectId
@@ -12,7 +12,7 @@ from rapidfuzz import fuzz, process
 logger = logging.getLogger("service")
 
 async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
-    extractor = ExtractorLLM(
+    extractor = ExtractLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
     extractedInfo = extractor.extract(input=questionRequest.question)
     logger.info(f"extractedInfo: {extractedInfo}")
@@ -48,7 +48,7 @@ async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo 
         reference=[]
     )
 
-async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractedInfo) -> QuestionResponse:
+async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractorLLMResponse) -> QuestionResponse:
      # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
@@ -56,7 +56,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     # retrieve context based on extracted info
     if extractedInfo.intention == "mod_recommendation" or extractedInfo.intention == "pack_customization":
         context = []
-        categorizer = CategoryLLM(
+        categorizer = CategorizeLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
         categoryInfo = categorizer.categorize(
             text=questionRequest.question,
@@ -66,7 +66,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
             categories=categoryInfo.categories,
         )
         logger.info(f"filtered_mod_names: {[mod.mod_name for mod in filtered_mod_brief_introductions]}")
-        recommender = ModRecommendationLLM(
+        recommender = ModRecommendLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
         response = recommender.recommend(
             text=questionRequest.question,
@@ -172,7 +172,7 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
         raise HTTPException(status_code=400, detail="Conversation not found or user not matching")
     return True
 
-def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
+def __retrieve(extractedInfo : ExtractorLLMResponse, text : str) -> list[Reference]:
     searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=3)
     stepback_searched_entries = vectorDB.search(query=extractedInfo.stepBackQuestion + extractedInfo.stepBackQuestionAnswer, top_k=3)
     all_entries = searched_entries + stepback_searched_entries
@@ -180,7 +180,7 @@ def __retrieve(extractedInfo : ExtractedInfo, text : str) -> list[Reference]:
     # logger.info(f"rerank and expand entries: {searched_entries}")
     return all_refs
 
-def __generate_references(entries : list[Entry], extractedInfo : ExtractedInfo) -> list[Reference]:
+def __generate_references(entries : list[Entry], extractedInfo : ExtractorLLMResponse) -> list[Reference]:
     std_mod_names = [
         match for mod_name in extractedInfo.extraction_fields.mods
         if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None

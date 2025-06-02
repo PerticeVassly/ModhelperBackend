@@ -33,7 +33,7 @@ class ExtractedFields(BaseModel):
     biomes : list[str] = []
     structures : list[str] = []
 
-class ExtractedInfo(BaseModel):
+class ExtractorLLMResponse(BaseModel):
     is_mc: Literal[0, 1]
     extraction_fields: Optional[ExtractedFields]
     intention: Union[intentionEnum, Literal[''], None]
@@ -42,11 +42,11 @@ class ExtractedInfo(BaseModel):
     stepBackQuestionAnswer: Optional[str] = None
 
 # summarizeTitle generate by summarize llm
-class SummarizedTitleInfo(BaseModel):
+class SummarizeLLMResponse(BaseModel):
     title: str
 
 # categoryInfo generate by category llm
-class CategoryInfo(BaseModel):
+class CategorizeLLMResponse(BaseModel):
     categories : list[str] = []
 
 class RecommendationItem(BaseModel):
@@ -55,7 +55,7 @@ class RecommendationItem(BaseModel):
     reason: str
 
 # ModRecommendationInfo generate by mod recommendation llm
-class ModRecommendationInfo(BaseModel):
+class ModRecommendLLMResponse(BaseModel):
     recommendations: list[RecommendationItem] = []
 
 
