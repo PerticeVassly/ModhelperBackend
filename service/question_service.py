@@ -15,15 +15,15 @@ logger = logging.getLogger("service")
 async def preProcess(question: str) -> PreProcessResult:
     # async get all require response from llm
     classify_llm = ClassifyLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=150))
     extract_llm = ExtractLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=150))
     intention_analyze_llm = IntentionAnalyzeLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=150))
     hyde_llm = HyDELLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=150))
     set_back_llm = SetBackLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=150))
     
     tasks = [
         lambda: classify_llm.classify(input=question),
