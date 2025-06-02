@@ -25,7 +25,7 @@ class intrestedEntityEnum(str, Enum):
     biome = "biome"
     structure = "structure"
 
-# extractedInfo BaseModel generate by extractor llm
+# ExtractLLMResponse generate by extract llm
 class ExtractedFields(BaseModel):
     mods : list[str] = []
     items : list[str] = []
@@ -33,30 +33,51 @@ class ExtractedFields(BaseModel):
     biomes : list[str] = []
     structures : list[str] = []
 
-class ExtractedInfo(BaseModel):
-    is_mc: Literal[0, 1]
-    extraction_fields: Optional[ExtractedFields]
-    intention: Union[intentionEnum, Literal[''], None]
-    answer: Optional[str] = None
-    stepBackQuestion: Optional[str] = None
-    stepBackQuestionAnswer: Optional[str] = None
+class ExtractLLMResponse(BaseModel):
+    extracted_fields: Optional[ExtractedFields]
+    
+# ClassifyLLMResponse generate by classify llm
+class ClassifyLLMResponse(BaseModel):
+    is_mc: Literal[0, 1] = 0
 
-# summarizeTitle generate by summarize llm
-class SummarizedTitleInfo(BaseModel):
+# IntentionAnalyzeLLMResponse generate by intention analyze llm
+class IntentionAnalyzeLLMResponse(BaseModel):
+    intention: Union[intentionEnum, Literal[''], None] = None
+
+# HyDELLMResponse generate by hyde llm
+class HyDELLMResponse(BaseModel):
+    hyde_answer: Optional[str] = None
+
+# SetBackLLMResponse generate by set back llm
+class SetBackLLMResponse(BaseModel):
+    step_back_question: Optional[str] = None
+    step_back_answer: Optional[str] = None
+
+# summarizeLLMResponse generate by summarize llm
+class SummarizeLLMResponse(BaseModel):
     title: str
 
-# categoryInfo generate by category llm
-class CategoryInfo(BaseModel):
+# categorizeLLMResponse generate by categorize llm
+class CategorizeLLMResponse(BaseModel):
     categories : list[str] = []
 
+# modRecommendLLMResponse generate by mod recommend llm
 class RecommendationItem(BaseModel):
     name: str
     url: str
     reason: str
 
-# ModRecommendationInfo generate by mod recommendation llm
-class ModRecommendationInfo(BaseModel):
+class ModRecommendLLMResponse(BaseModel):
     recommendations: list[RecommendationItem] = []
+
+class PreProcessResult(BaseModel):
+    is_mc: Optional[Literal[0, 1]] = None
+    extracted_fields: Optional[ExtractedFields] = None
+    intention: Optional[intentionEnum] = None
+    hyde_answer: Optional[str] = None
+    step_back_question: Optional[str] = None
+    step_back_answer: Optional[str] = None
+    
 
 
     
