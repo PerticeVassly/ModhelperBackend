@@ -1,4 +1,4 @@
-from .llm import LLMClient, ExtractLLM, RAGLLM, NonRAGLLM, SummarizeLLM, CategorizeLLM, ModRecommendLLM
+from .llm import LLMClient, ExtractLLM, RAGLLM, NonRAGLLM, SummarizeLLM, CategorizeLLM, ModRecommendLLM, ClassifyLLM, IntentionAnalyzeLLM, HyDELLM, SetBackLLM
 
 __all__ = [
     "LLMClient",
@@ -8,4 +8,8 @@ __all__ = [
     "SummarizeLLM",
     "CategorizeLLM",
     "ModRecommendLLM",
+    "ClassifyLLM",
+    "IntentionAnalyzeLLM",
+    "HyDELLM",
+    "SetBackLLM"
 ]

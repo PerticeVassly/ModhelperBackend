@@ -1,4 +1,4 @@
-from llm import LLMClient, RAGLLM, NonRAGLLM, LLMClient, ExtractLLM, SummarizeLLM, CategorizeLLM, ModRecommendLLM
+from llm import *
 from db import conversationsRepository, messagesRepository, metaInfosRepository, vectorDB, all_mod_names, all_item_names, all_entity_names, all_structure_names, all_biome_names
 from model import *
 from bson import ObjectId
@@ -8,16 +8,47 @@ from fastapi import HTTPException
 import logging
 import asyncio
 from rapidfuzz import fuzz, process
+from typing import Callable, Awaitable
 
 logger = logging.getLogger("service")
 
-async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
-    extractor = ExtractLLM(
+async def preProcess(question: str) -> PreProcessResult:
+    # async get all require response from llm
+    classify_llm = ClassifyLLM(
         llm_client = LLMClient(api_key=settings.LLM_API_KEY))
-    extractedInfo = extractor.extract(input=questionRequest.question)
-    logger.info(f"extractedInfo: {extractedInfo}")
-    if extractedInfo.is_mc: 
-        return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, extractedInfo=extractedInfo)
+    extract_llm = ExtractLLM(
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+    intention_analyze_llm = IntentionAnalyzeLLM(
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+    hyde_llm = HyDELLM(
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+    set_back_llm = SetBackLLM(
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+    
+    tasks = [
+        classify_llm.classify(question=question),
+        extract_llm.extract(input=question),
+        intention_analyze_llm.analyze_intention(question=question),
+        hyde_llm.hyde(question=question),
+        set_back_llm.set_back(question=question)
+    ]
+
+    results = await asyncio.gather(*(task() for task in tasks))
+
+    return PreProcessResult(
+        is_mc=results[0].is_mc,
+        extracted_fields=results[1].extraction_fields,
+        intention=results[2].intention,
+        hyde_answer=results[3].hyde_answer,
+        step_back_question=results[4].step_back_question,
+        step_back_answer=results[4].step_back_answer
+    )
+
+async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
+    preProcessResult = await preProcess(question=questionRequest.question)
+    logger.info(f"preProcessResult: {preProcessResult}")
+    if preProcess.is_mc: 
+        return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, preProcessResult=preProcessResult)
     else:
         return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo) 
         
@@ -48,13 +79,13 @@ async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo 
         reference=[]
     )
 
-async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, extractedInfo : ExtractorLLMResponse) -> QuestionResponse:
+async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, preProcessResult : PreProcessResult) -> QuestionResponse:
      # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
     messages = messagesRepository.find_all_by_conversation_id(conversation_id=ObjectId(questionRequest.conversation_id))
     # retrieve context based on extracted info
-    if extractedInfo.intention == "mod_recommendation" or extractedInfo.intention == "pack_customization":
+    if preProcessResult.intention == "mod_recommendation" or preProcessResult.intention == "pack_customization":
         context = []
         categorizer = CategorizeLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
@@ -75,7 +106,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
     else:
         # chat with llm
         context = __retrieve(
-            extractedInfo=extractedInfo,
+            preProcessResult=preProcessResult,
             text=questionRequest.question)
         rag = RAGLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
@@ -172,33 +203,33 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
         raise HTTPException(status_code=400, detail="Conversation not found or user not matching")
     return True
 
-def __retrieve(extractedInfo : ExtractorLLMResponse, text : str) -> list[Reference]:
-    searched_entries = vectorDB.search(query=text.strip() + extractedInfo.answer, top_k=3)
-    stepback_searched_entries = vectorDB.search(query=extractedInfo.stepBackQuestion + extractedInfo.stepBackQuestionAnswer, top_k=3)
+def __retrieve(preProcessResult : PreProcessResult, text : str) -> list[Reference]:
+    searched_entries = vectorDB.search(query=text.strip() + preProcessResult.answer, top_k=3)
+    stepback_searched_entries = vectorDB.search(query=preProcessResult.stepBackQuestion + preProcessResult.stepBackQuestionAnswer, top_k=3)
     all_entries = searched_entries + stepback_searched_entries
-    all_refs = __generate_references(all_entries, extractedInfo)
+    all_refs = __generate_references(all_entries, preProcessResult)
     # logger.info(f"rerank and expand entries: {searched_entries}")
     return all_refs
 
-def __generate_references(entries : list[Entry], extractedInfo : ExtractorLLMResponse) -> list[Reference]:
+def __generate_references(entries : list[Entry], preProcessResult : PreProcessResult) -> list[Reference]:
     std_mod_names = [
-        match for mod_name in extractedInfo.extraction_fields.mods
+        match for mod_name in preProcessResult.extraction_fields.mods
         if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None
     ]
     std_item_names = [
-        match for item_name in extractedInfo.extraction_fields.items
+        match for item_name in preProcessResult.extraction_fields.items
         if (match := __fuzzy_match(query=item_name, candidates=all_item_names, threshold=90)) is not None
     ]
     std_boime_names = [
-        match for boime_name in extractedInfo.extraction_fields.biomes
+        match for boime_name in preProcessResult.extraction_fields.biomes
         if (match := __fuzzy_match(query=boime_name, candidates=all_biome_names, threshold=90)) is not None
     ]
     std_entity_names = [
-        match for entity_name in extractedInfo.extraction_fields.entities
+        match for entity_name in preProcessResult.extraction_fields.entities
         if (match := __fuzzy_match(query=entity_name, candidates=all_entity_names, threshold=90)) is not None
     ]
     std_structure_names = [
-        match for structure_name in extractedInfo.extraction_fields.structures
+        match for structure_name in preProcessResult.extraction_fields.structures
         if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=90)) is not None
     ]
     logger.info(f"std_names_matched: mod={std_mod_names}, item={std_item_names}, biome={std_boime_names}, entity={std_entity_names}, structure={std_structure_names}")
@@ -208,8 +239,8 @@ def __generate_references(entries : list[Entry], extractedInfo : ExtractorLLMRes
         rule_socre = 0.0
         if entry.metadata.mod_name in std_mod_names:
             rule_socre += 1
-        if (entry.metadata.type == "introduction" and extractedInfo.intention == "basic_info") or \
-            (entry.metadata.type == "guide" and extractedInfo.intention == "gameplay_guide") :
+        if (entry.metadata.type == "introduction" and preProcessResult.intention == "basic_info") or \
+            (entry.metadata.type == "guide" and preProcessResult.intention == "gameplay_guide") :
             rule_socre += 1
         rule_score = min(rule_socre, 1.0)
         alpha = 0.2

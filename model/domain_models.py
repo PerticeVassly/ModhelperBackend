@@ -25,7 +25,7 @@ class intrestedEntityEnum(str, Enum):
     biome = "biome"
     structure = "structure"
 
-# extractedInfo BaseModel generate by extractor llm
+# ExtractLLMResponse generate by extract llm
 class ExtractedFields(BaseModel):
     mods : list[str] = []
     items : list[str] = []
@@ -33,40 +33,51 @@ class ExtractedFields(BaseModel):
     biomes : list[str] = []
     structures : list[str] = []
 
-class ExtractorLLMResponse(BaseModel):
+class PreProcessResult(BaseModel):
     extraction_fields: Optional[ExtractedFields]
-
-# classifyLLMResponse generate by classify llm
+    
+# ClassifyLLMResponse generate by classify llm
 class ClassifyLLMResponse(BaseModel):
     is_mc: Literal[0, 1] = 0
 
+# IntentionAnalyzeLLMResponse generate by intention analyze llm
 class IntentionAnalyzeLLMResponse(BaseModel):
     intention: Union[intentionEnum, Literal[''], None] = None
 
+# HyDELLMResponse generate by hyde llm
 class HyDELLMResponse(BaseModel):
     hyde_answer: Optional[str] = None
 
+# SetBackLLMResponse generate by set back llm
 class SetBackLLMResponse(BaseModel):
     step_back_question: Optional[str] = None
     step_back_answer: Optional[str] = None
 
-
-# summarizeTitle generate by summarize llm
+# summarizeLLMResponse generate by summarize llm
 class SummarizeLLMResponse(BaseModel):
     title: str
 
-# categoryInfo generate by category llm
+# categorizeLLMResponse generate by categorize llm
 class CategorizeLLMResponse(BaseModel):
     categories : list[str] = []
 
+# modRecommendLLMResponse generate by mod recommend llm
 class RecommendationItem(BaseModel):
     name: str
     url: str
     reason: str
 
-# ModRecommendationInfo generate by mod recommendation llm
 class ModRecommendLLMResponse(BaseModel):
     recommendations: list[RecommendationItem] = []
+
+class PreProcessResult(BaseModel):
+    is_mc: Optional[Literal[0, 1]] = None
+    extracted_fields: Optional[ExtractedFields] = None
+    intention: Optional[intentionEnum] = None
+    hyde_answer: Optional[str] = None
+    step_back_question: Optional[str] = None
+    step_back_answer: Optional[str] = None
+    
 
 
     

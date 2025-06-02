@@ -76,7 +76,7 @@ class ExtractLLM():
         self.extract_prompt = ExtractPrompt()
         self.retry_prompt = RetryPrompt()
         
-    def extract(self, input: str) -> ExtractorLLMResponse:
+    def extract(self, input: str) -> PreProcessResult:
         prompt = self.extract_prompt.render(
             text=input
         )
@@ -92,7 +92,7 @@ class ExtractLLM():
                 response_loaded = json.loads(response)
                 is_valid = all(key in response_loaded for key in extracLLMResponseExample.model_dump().keys())
                 if is_valid:
-                    instance = ExtractorLLMResponse.model_validate(response_loaded)
+                    instance = PreProcessResult.model_validate(response_loaded)
                     return instance
             except json.JSONDecodeError:
                 pass
