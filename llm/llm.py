@@ -14,7 +14,7 @@ class LLMClient():
                  api_key: str = None, 
                  base_url: str = "https://api.deepseek.com",
                  temperature: float = 0.7,
-                 max_tokens: int = 1000,
+                 max_tokens: int = 500,
                  stream: bool = False,
                  messages: list[MessageInfo] = []):
         self.model_name = model_name

@@ -4,8 +4,8 @@ summarizeLLMResponseExample = SummarizeLLMResponse(
     title="复用或生成的标题"
 )
 
-extracLLMResponseExample = PreProcessResult(
-    extraction_fields=ExtractedFields(
+extracLLMResponseExample = ExtractLLMResponse(
+    extracted_fields=ExtractedFields(
         mods=["mod1", "mod2"],
         items=["item1", "item2"],
         entities=["entity1", "entity2"],

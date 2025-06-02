@@ -33,8 +33,8 @@ class ExtractedFields(BaseModel):
     biomes : list[str] = []
     structures : list[str] = []
 
-class PreProcessResult(BaseModel):
-    extraction_fields: Optional[ExtractedFields]
+class ExtractLLMResponse(BaseModel):
+    extracted_fields: Optional[ExtractedFields]
     
 # ClassifyLLMResponse generate by classify llm
 class ClassifyLLMResponse(BaseModel):

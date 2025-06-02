@@ -15,15 +15,15 @@ logger = logging.getLogger("service")
 async def preProcess(question: str) -> PreProcessResult:
     # async get all require response from llm
     classify_llm = ClassifyLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
     extract_llm = ExtractLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
     intention_analyze_llm = IntentionAnalyzeLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
     hyde_llm = HyDELLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
     set_back_llm = SetBackLLM(
-        llm_client = LLMClient(api_key=settings.LLM_API_KEY))
+        llm_client = LLMClient(api_key=settings.LLM_API_KEY, max_tokens=250))
     
     tasks = [
         lambda: classify_llm.classify(input=question),
@@ -37,7 +37,7 @@ async def preProcess(question: str) -> PreProcessResult:
 
     return PreProcessResult(
         is_mc=results[0].is_mc,
-        extracted_fields=results[1].extraction_fields,
+        extracted_fields=results[1].extracted_fields,
         intention=results[2].intention,
         hyde_answer=results[3].hyde_answer,
         step_back_question=results[4].step_back_question,
@@ -47,7 +47,7 @@ async def preProcess(question: str) -> PreProcessResult:
 async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
     preProcessResult = await preProcess(question=questionRequest.question)
     logger.info(f"preProcessResult: {preProcessResult}")
-    if preProcess.is_mc: 
+    if preProcessResult.is_mc: 
         return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, preProcessResult=preProcessResult)
     else:
         return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo) 
@@ -89,7 +89,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
         context = []
         categorizer = CategorizeLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
-        categoryInfo = categorizer.categorize(
+        categoryInfo = await categorizer.categorize(
             text=questionRequest.question,
         )
         logger.info(f"categoryInfo: {categoryInfo}")
@@ -99,7 +99,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
         logger.info(f"filtered_mod_names: {[mod.mod_name for mod in filtered_mod_brief_introductions]}")
         recommender = ModRecommendLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
-        response = recommender.recommend(
+        response = await recommender.recommend(
             text=questionRequest.question,
             mods=filtered_mod_brief_introductions
         )
@@ -204,8 +204,8 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
     return True
 
 def __retrieve(preProcessResult : PreProcessResult, text : str) -> list[Reference]:
-    searched_entries = vectorDB.search(query=text.strip() + preProcessResult.answer, top_k=3)
-    stepback_searched_entries = vectorDB.search(query=preProcessResult.stepBackQuestion + preProcessResult.stepBackQuestionAnswer, top_k=3)
+    searched_entries = vectorDB.search(query=text.strip() + preProcessResult.hyde_answer.strip(), top_k=3)
+    stepback_searched_entries = vectorDB.search(query=preProcessResult.step_back_question + preProcessResult.step_back_answer, top_k=3)
     all_entries = searched_entries + stepback_searched_entries
     all_refs = __generate_references(all_entries, preProcessResult)
     # logger.info(f"rerank and expand entries: {searched_entries}")
@@ -213,23 +213,23 @@ def __retrieve(preProcessResult : PreProcessResult, text : str) -> list[Referenc
 
 def __generate_references(entries : list[Entry], preProcessResult : PreProcessResult) -> list[Reference]:
     std_mod_names = [
-        match for mod_name in preProcessResult.extraction_fields.mods
+        match for mod_name in preProcessResult.extracted_fields.mods
         if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None
     ]
     std_item_names = [
-        match for item_name in preProcessResult.extraction_fields.items
+        match for item_name in preProcessResult.extracted_fields.items
         if (match := __fuzzy_match(query=item_name, candidates=all_item_names, threshold=90)) is not None
     ]
     std_boime_names = [
-        match for boime_name in preProcessResult.extraction_fields.biomes
+        match for boime_name in preProcessResult.extracted_fields.biomes
         if (match := __fuzzy_match(query=boime_name, candidates=all_biome_names, threshold=90)) is not None
     ]
     std_entity_names = [
-        match for entity_name in preProcessResult.extraction_fields.entities
+        match for entity_name in preProcessResult.extracted_fields.entities
         if (match := __fuzzy_match(query=entity_name, candidates=all_entity_names, threshold=90)) is not None
     ]
     std_structure_names = [
-        match for structure_name in preProcessResult.extraction_fields.structures
+        match for structure_name in preProcessResult.extracted_fields.structures
         if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=90)) is not None
     ]
     logger.info(f"std_names_matched: mod={std_mod_names}, item={std_item_names}, biome={std_boime_names}, entity={std_entity_names}, structure={std_structure_names}")
