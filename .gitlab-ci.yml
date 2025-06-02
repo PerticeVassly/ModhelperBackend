@@ -57,7 +57,8 @@ deploy-job:      # This job runs in the deploy stage.
     - |
       ssh "$DEPLOY_USER@$DEPLOY_SERVER" '
         cd ~/backend;
-        docker compose up -d --force-recreate backend;
+        docker compose up --pull always -d --force-recreate backend;
+        docker image prune -f;
       '
   only:
     - master
