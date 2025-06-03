@@ -50,7 +50,8 @@ class GetAllConversationsResponseItem(BaseModel):
 
 # mod
 class GetModResponse(BaseModel):
-    mods: list[ModVO] = []
+    data: list[ModVO] = []
+    total: int
 
 class AddModRequest(BaseModel):
     mod: Mod

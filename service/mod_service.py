@@ -13,7 +13,8 @@ def handle_get_mods(userInfo: UserInfo, page: int = 1, page_size: int = 20) -> G
     for mod in mods:
         if mod.id in favorite_mod_ids:
             mod.isFavorite = True
-    return GetModResponse(mods=mods)
+    total = len(mods)
+    return GetModResponse(data=mods, total=total)
 
 def handle_add_mod(mod: Mod) -> AddModResponse:
     if mod.mod_name in global_vars.all_mod_names:
