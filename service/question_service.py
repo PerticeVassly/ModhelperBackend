@@ -44,7 +44,10 @@ async def preProcess(question: str) -> PreProcessResult:
         step_back_answer=results[4].step_back_answer
     )
 
-async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
+async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo, plainQues : bool = False) -> QuestionResponse:
+    if plainQues:
+        # if the question is plain, we just return the answer
+        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo)
     preProcessResult = await preProcess(question=questionRequest.question)
     logger.info(f"preProcessResult: {preProcessResult}")
     if preProcessResult.is_mc: 
