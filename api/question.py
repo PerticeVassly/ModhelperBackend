@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from model import *
 from service import *
 
@@ -6,8 +6,10 @@ router = APIRouter()
 
 @router.post("/question", response_model = QuestionResponse)
 async def question(request: QuestionRequest,
+                   rawRequest : Request , 
                    userInfo: UserInfo = Depends(get_current_user)) -> QuestionResponse:
-    response = await handle_question(request, userInfo)
+    plain = rawRequest.query_params.get("key") == "plain"
+    response = await handle_question(request, userInfo, plainQues=plain)
     return response
 
 @router.post("/conversation", response_model = CreateConversationResponse)
