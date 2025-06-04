@@ -277,11 +277,12 @@ def __generate_references(entries : list[Entry], preProcessResult : PreProcessRe
     full_documents_map = {}
     for entry in entries:
         full_document = metaInfosRepository.find_full_document_by_metadata(metadata=entry.metadata)
-        full_documents_map[entry.metadata.document_name] = full_document
+        full_documents_map[entry.metadata.document_name] = [full_document, entry.metadata.url]
     for key, value in full_documents_map.items():
         references.append(Reference(
             description=key,
-            content=value
+            content=value[0],
+            url=value[1]
         ))
     
     # expand
@@ -291,28 +292,32 @@ def __generate_references(entries : list[Entry], preProcessResult : PreProcessRe
             # insert at the beginning
             references.insert(0, Reference(
                 description=item.name,
-                content=item.description
+                content=item.description,
+                url=item.url
             ))
     for boime_name in std_boime_names:
         boime, mod_belonging = metaInfosRepository.find_biome_by_name(boime_name)
         if boime and boime.description and (mod_belonging in std_mod_names or not std_mod_names):
             references.insert(0, Reference(
                 description=boime.name,
-                content=boime.description
+                content=boime.description,
+                url=boime.url
             ))
     for entity_name in std_entity_names:
         entity, mod_belonging = metaInfosRepository.find_entity_by_name(entity_name)
         if entity and entity.description and (mod_belonging in std_mod_names or not std_mod_names):
             references.insert(0, Reference(
                 description=entity.name,
-                content=entity.description
+                content=entity.description,
+                url=entity.url
             ))
     for structure_name in std_structure_names:
         structure, mod_belonging = metaInfosRepository.find_structure_by_name(structure_name)
         if structure and structure.description and (mod_belonging in std_mod_names or not std_mod_names):
             references.insert(0, Reference(
                 description=structure.name,
-                content=structure.description
+                content=structure.description,
+                url=structure.url
             ))
     return references
 

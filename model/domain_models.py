@@ -9,6 +9,7 @@ from .db_models import Mod
 class Reference(BaseModel):
     description: str
     content: str
+    url : str = ""
 
 # extracted user intention type from user input
 class intentionEnum(str, Enum):
