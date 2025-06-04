@@ -9,6 +9,7 @@ class UserInfo(BaseModel):
     username: str
     email : EmailStr
     password : str
+    favorite_mods : list[str] = []
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -26,6 +27,13 @@ class MessageInfo(BaseModel):
     reference: list[dict[str, str]] = []
     assistant_message : str
     timestamp : datetime
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+class AdminInfo(BaseModel):
+    id: Optional[ObjectId] = Field(default=None, alias="_id")
+    user_id: ObjectId
+    username: str
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

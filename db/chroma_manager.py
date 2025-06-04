@@ -80,6 +80,22 @@ class ChromaVectorDB:
                 results["distances"][0]
             )
         ]
+
+    def delete_by_mod(self, mod_name: str) -> bool:
+        try:
+            mod_name = mod_name
+            ids_to_delete = self.collection.get(where={"mod_name": mod_name})["ids"]
+            if not ids_to_delete:
+                logger.info(f"[ChromaDB] 未找到 mod_name={mod_name} 的任何分块，无需删除。")
+                return True
+
+            self.collection.delete(ids=ids_to_delete)
+            logger.info(f"[ChromaDB] 已删除 mod_name={mod_name} 的 {len(ids_to_delete)} 个分块。")
+            return True
+        except Exception as e:
+            logger.error(f"[ChromaDB] 删除 mod_name={mod_name} 相关分块时出错: {e}")
+            return False
+
     
     def __del__(self):
         logger.info("ChromaVectorDB instance deleted.")

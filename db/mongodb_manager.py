@@ -39,6 +39,28 @@ class UsersCollection:
             logger.error(f"Error inserting user: {e}")
             return None
 
+    def toggle_favorite_mod(self, user_id: ObjectId, mod_id: str) -> str | None:
+        user = self.find_one(user_id)
+        if not user:
+            logger.error(f"用户 {user_id} 未找到")
+            return None
+        if mod_id in user.favorite_mods:
+            result = self.collection.update_one(
+                {"_id": user_id},
+                {"$pull": {"favorite_mods": mod_id}}
+            )
+            if result.modified_count > 0:
+                return "Removed from favorites"
+        else:
+            result = self.collection.update_one(
+                {"_id": user_id},
+                {"$addToSet": {"favorite_mods": mod_id}}
+            )
+            if result.modified_count > 0:
+                return "Added to favorites"
+        logger.error("Failed to toggle favorite mod")
+        return None
+
 class ConversationsCollection:
     def __init__(self):
         self.collection = db["conversations"]
@@ -108,6 +130,7 @@ class MetaInfoCollection:
                 return True
         else:
             self.collection.insert_one(mod.model_dump())
+            return True
 
     def find_all_mod_names(self):
         mods = self.collection.find({}, {"mod_name": 1, "_id": 0})
@@ -211,11 +234,73 @@ class MetaInfoCollection:
 
         return [ModBriefIntroduction(**mod) for mod in mods]
 
+    def find_mod_by_page(self, page: int = 1, page_size: int = 20) -> list[ModVO]:
+        skip = (page - 1) * page_size
+        mods = self.collection.find({}).skip(skip).limit(page_size)
+        result = []
+        for mod in mods:
+            mod_vo_dict = mod.copy()
+            mod_vo_dict["id"] = str(mod_vo_dict.pop("_id"))
+            mod_vo_dict["isFavorite"] = False
+            result.append(ModVO.model_validate(mod_vo_dict))
+        return result
+
+    def delete_mod_by_id(self, mod_id: str) -> str | None:
+        try:
+            mod = self.collection.find_one({"_id": ObjectId(mod_id)})
+            if not mod:
+                return None
+            mod_name = mod.get("mod_name")
+            result = self.collection.delete_one({"_id": ObjectId(mod_id)})
+            if result.deleted_count > 0:
+                return mod_name
+            return None
+        except Exception as e:
+            logger.error(f"删除 mod 失败: {e}")
+            return None
+
+    def find_by_id(self, mod_id: str) -> Mod | None:
+        try:
+            mod = self.collection.find_one({"_id": ObjectId(mod_id)})
+            if not mod:
+                logger.error("Mod not found")
+                return None
+            mod = dict(mod)
+            mod.pop("_id", None)
+            return Mod.model_validate(mod)
+        except Exception as e:
+            logger.error(f"获取 mod 失败: {e}")
+            return None
+
+class AdminsCollection:
+    def __init__(self):
+        self.collection = db["admins"]
+
+    def add_admin(self, user_id: ObjectId, username: str) -> bool:
+        if self.collection.find_one({"user_id": user_id}):
+            return False
+        self.collection.insert_one({"user_id": user_id, "username": username})
+        return True
+
+    def remove_admin(self, user_id: ObjectId) -> bool:
+        result = self.collection.delete_one({"user_id": user_id})
+        return result.deleted_count > 0
+
+    def list_admins(self) -> list[AdminInfo]:
+        return [AdminInfo(**a) for a in self.collection.find()]
+
+    def find_one_by_username(self, username: str) -> AdminInfo | None:
+        admin = self.collection.find_one({"username": username})
+        if admin:
+            return AdminInfo(**admin)
+        return None
+
 
 
 usersRepository = UsersCollection()
 conversationsRepository = ConversationsCollection()
 messagesRepository = MessagesCollection()
 metaInfosRepository = MetaInfoCollection()
+adminsRepository = AdminsCollection()
 
 

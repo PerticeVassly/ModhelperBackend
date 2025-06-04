@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Literal
 from typing import Optional
 from typing import Union
+from .db_models import Mod
 
 # retrieved reference
 class Reference(BaseModel):
@@ -70,6 +71,11 @@ class RecommendationItem(BaseModel):
 class ModRecommendLLMResponse(BaseModel):
     recommendations: list[RecommendationItem] = []
 
+
+class ModVO(Mod):
+    id: str
+    isFavorite: bool
+
 class PreProcessResult(BaseModel):
     is_mc: Optional[Literal[0, 1]] = None
     extracted_fields: Optional[ExtractedFields] = None
@@ -77,8 +83,6 @@ class PreProcessResult(BaseModel):
     hyde_answer: Optional[str] = None
     step_back_question: Optional[str] = None
     step_back_answer: Optional[str] = None
-    
-
 
     
 

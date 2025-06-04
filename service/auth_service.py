@@ -1,6 +1,9 @@
 from fastapi import HTTPException, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from db import usersRepository
+from google.protobuf.any import is_type
+from typing_inspection.typing_objects import is_any
+
+from db import usersRepository, adminsRepository
 from model import *
 import bcrypt
 from jose import JWTError, jwt
@@ -83,4 +86,11 @@ def verify_token(token: str) -> dict:
         return payload
     except JWTError:
         return None
+
+def handle_get_user_info(user: UserInfo) -> UserInfoResponse:
+    # if user.username == "admin":
+    #     return UserInfoResponse(is_admin=True)
+    # return UserInfoResponse(is_admin=False)
+    is_admin = adminsRepository.find_one_by_username(user.username) is not None
+    return UserInfoResponse(is_admin=is_admin)
 

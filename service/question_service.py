@@ -1,5 +1,7 @@
+
 from llm import *
-from db import conversationsRepository, messagesRepository, metaInfosRepository, vectorDB, all_mod_names, all_item_names, all_entity_names, all_structure_names, all_biome_names
+from db import conversationsRepository, messagesRepository, metaInfosRepository, vectorDB
+import db.global_vars as global_vars
 from model import *
 from bson import ObjectId
 from datetime import datetime
@@ -216,24 +218,25 @@ def __retrieve(preProcessResult : PreProcessResult, text : str) -> list[Referenc
 
 def __generate_references(entries : list[Entry], preProcessResult : PreProcessResult) -> list[Reference]:
     std_mod_names = [
-        match for mod_name in preProcessResult.extracted_fields.mods
-        if (match := __fuzzy_match(query=mod_name, candidates=all_mod_names, threshold=80)) is not None
+<<<<<<< service/question_service.py
+        match for mod_name in extractedInfo.extraction_fields.mods
+        if (match := __fuzzy_match(query=mod_name, candidates=global_vars.all_mod_names, threshold=80)) is not None
     ]
     std_item_names = [
-        match for item_name in preProcessResult.extracted_fields.items
-        if (match := __fuzzy_match(query=item_name, candidates=all_item_names, threshold=90)) is not None
+        match for item_name in extractedInfo.extraction_fields.items
+        if (match := __fuzzy_match(query=item_name, candidates=global_vars.all_item_names, threshold=90)) is not None
     ]
     std_boime_names = [
-        match for boime_name in preProcessResult.extracted_fields.biomes
-        if (match := __fuzzy_match(query=boime_name, candidates=all_biome_names, threshold=90)) is not None
+        match for boime_name in extractedInfo.extraction_fields.biomes
+        if (match := __fuzzy_match(query=boime_name, candidates=global_vars.all_biome_names, threshold=90)) is not None
     ]
     std_entity_names = [
-        match for entity_name in preProcessResult.extracted_fields.entities
-        if (match := __fuzzy_match(query=entity_name, candidates=all_entity_names, threshold=90)) is not None
+        match for entity_name in extractedInfo.extraction_fields.entities
+        if (match := __fuzzy_match(query=entity_name, candidates=global_vars.all_entity_names, threshold=90)) is not None
     ]
     std_structure_names = [
-        match for structure_name in preProcessResult.extracted_fields.structures
-        if (match := __fuzzy_match(query=structure_name, candidates=all_structure_names, threshold=90)) is not None
+        match for structure_name in extractedInfo.extraction_fields.structures
+        if (match := __fuzzy_match(query=structure_name, candidates=global_vars.all_structure_names, threshold=90)) is not None
     ]
     logger.info(f"std_names_matched: mod={std_mod_names}, item={std_item_names}, biome={std_boime_names}, entity={std_entity_names}, structure={std_structure_names}")
 

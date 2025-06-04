@@ -45,6 +45,11 @@ LOGGING_CONFIG = {
             "handlers": ["console"],
             "propagate": False,
         },
+        "admin_manager": {
+            "level": "INFO",
+            "handlers": ["file"],
+            "propagate": False,
+        },
     },
     "root": {
         "level": "INFO",

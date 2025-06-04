@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
-from .domain_models import Reference
+from .domain_models import Reference, ModVO
+from .db_models import Mod
 
 # auth
 class RegisterRequest(BaseModel):
@@ -17,6 +18,9 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
+
+class UserInfoResponse(BaseModel):
+    is_admin: bool
 
 # question
 class QuestionRequest(BaseModel):
@@ -46,3 +50,20 @@ class DeleteConversationResponse(BaseModel):
 class GetAllConversationsResponseItem(BaseModel):
     id: str
     title: str
+
+# mod
+class GetModResponse(BaseModel):
+    data: list[ModVO] = []
+    total: int
+
+class AddModRequest(BaseModel):
+    mod: Mod
+
+class AddModResponse(BaseModel):
+    message: str
+
+class DeleteModResponse(BaseModel):
+    message: str
+
+class ToggleFavoriteModResponse(BaseModel):
+    message: str
