@@ -1,3 +1,5 @@
+from http.client import responses
+
 from model import *
 from service import *
 from fastapi import APIRouter, Request
@@ -16,4 +18,9 @@ def login(request: LoginRequest, raw_request: Request):
         response = handle_guest_login()
     else:
         response = handle_login(request)
+    return response
+
+@router.get("/user-info", response_model = UserInfoResponse)
+def get_user_info(userInfo: UserInfo = Depends(get_current_user)):
+    response = handle_get_user_info(userInfo)
     return response

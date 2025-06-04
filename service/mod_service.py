@@ -18,7 +18,8 @@ def handle_get_mods(userInfo: UserInfo, page: int = 1, page_size: int = 20) -> G
 
 def handle_add_mod(mod: Mod) -> AddModResponse:
     if mod.mod_name in global_vars.all_mod_names:
-        raise HTTPException(status_code=400, detail="Mod already exists")
+        logger.error(f"Mod {mod.mod_name} already exists")
+        return AddModResponse(message="Mod already exists")
 
     result = metaInfosRepository.insert_one(mod)
     if not result:
@@ -26,23 +27,23 @@ def handle_add_mod(mod: Mod) -> AddModResponse:
     global_vars.refresh_all_names()
 
     vectorDB.add(
-        raw_text=mod["introduction"],
+        raw_text=mod.introduction,
         metadata=DocumentMetadata(
-            document_name=mod["mod_name"] + " introduction",
-            url=mod["detail_page_url"],
+            document_name=mod.mod_name + " introduction",
+            url=mod.detail_page_url,
             type=DocumentEnum.introduction,
-            mod_name=mod["mod_name"],
+            mod_name=mod.mod_name,
         ),
         overwrite=True
     )
-    for guide in mod["guides"]:
+    for guide in mod.guides:
         vectorDB.add(
-            raw_text=guide["content"],
+            raw_text=guide.content,
             metadata=DocumentMetadata(
-                document_name=guide["guide_name"],
-                url=guide["guide_page_url"],
+                document_name=guide.guide_name,
+                url=guide.guide_page_url,
                 type=DocumentEnum.guide,
-                mod_name=mod["mod_name"],
+                mod_name=mod.mod_name,
             ),
             overwrite=True
         )
@@ -66,7 +67,7 @@ def handle_delete_mod(mod_id: str) -> DeleteModResponse:
     return DeleteModResponse(message="Mod deleted successfully")
 
 def handle_toggle_favorite_mod(mod_id: str, userInfo: UserInfo) -> ToggleFavoriteModResponse:
-    if not metaInfosRepository.exists_by_id(mod_id):
+    if not metaInfosRepository.find_by_id(mod_id):
         raise HTTPException(status_code=404, detail="Mod not found")
 
     message = usersRepository.toggle_favorite_mod(userInfo.id, mod_id)

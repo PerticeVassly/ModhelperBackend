@@ -30,6 +30,13 @@ class MessageInfo(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+class AdminInfo(BaseModel):
+    id: Optional[ObjectId] = Field(default=None, alias="_id")
+    user_id: ObjectId
+    username: str
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 class Guide(BaseModel):
     guide_page_url : str
     guide_name : str
@@ -60,8 +67,6 @@ class Mod(BaseModel):
     biomes : list[GeneralItem] = []
     entities : list[GeneralItem] = []
     structures : list[GeneralItem] = []
-
-
 
 class DocumentEnum(str, Enum):
     introduction = "introduction"

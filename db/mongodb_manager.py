@@ -272,11 +272,35 @@ class MetaInfoCollection:
             logger.error(f"获取 mod 失败: {e}")
             return None
 
+class AdminsCollection:
+    def __init__(self):
+        self.collection = db["admins"]
+
+    def add_admin(self, user_id: ObjectId, username: str) -> bool:
+        if self.collection.find_one({"user_id": user_id}):
+            return False
+        self.collection.insert_one({"user_id": user_id, "username": username})
+        return True
+
+    def remove_admin(self, user_id: ObjectId) -> bool:
+        result = self.collection.delete_one({"user_id": user_id})
+        return result.deleted_count > 0
+
+    def list_admins(self) -> list[AdminInfo]:
+        return [AdminInfo(**a) for a in self.collection.find()]
+
+    def find_one_by_username(self, username: str) -> AdminInfo | None:
+        admin = self.collection.find_one({"username": username})
+        if admin:
+            return AdminInfo(**admin)
+        return None
+
 
 
 usersRepository = UsersCollection()
 conversationsRepository = ConversationsCollection()
 messagesRepository = MessagesCollection()
 metaInfosRepository = MetaInfoCollection()
+adminsRepository = AdminsCollection()
 
 

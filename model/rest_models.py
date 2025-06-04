@@ -19,6 +19,9 @@ class LoginResponse(BaseModel):
     access_token: str
     token_type: str
 
+class UserInfoResponse(BaseModel):
+    is_admin: bool
+
 # question
 class QuestionRequest(BaseModel):
     conversation_id: str

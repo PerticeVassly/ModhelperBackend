@@ -5,7 +5,7 @@
 # from .sqlite3_manager import relationDB
 from .chroma_manager import vectorDB
 from .neo4j_manager import graphDB
-from .mongodb_manager import usersRepository, conversationsRepository, messagesRepository, metaInfosRepository
+from .mongodb_manager import usersRepository, conversationsRepository, messagesRepository, metaInfosRepository,adminsRepository
 from config.logging_config import setup_logging
 from .global_vars import *
 
@@ -16,6 +16,7 @@ __all__ = [
     "conversationsRepository",
     "messagesRepository",
     "metaInfosRepository",
+    "adminsRepository",
     "all_mod_names",
     "all_item_names",
     "all_entity_names",

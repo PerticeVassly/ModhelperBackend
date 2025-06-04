@@ -59,7 +59,6 @@ class RecommendationItem(BaseModel):
 class ModRecommendationInfo(BaseModel):
     recommendations: list[RecommendationItem] = []
 
-# 暂无作者信息
 class ModVO(Mod):
     id: str
     isFavorite: bool
