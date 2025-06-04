@@ -68,6 +68,7 @@ class Mod(BaseModel):
     entities : list[GeneralItem] = []
     structures : list[GeneralItem] = []
 
+
 class DocumentEnum(str, Enum):
     introduction = "introduction"
     guide = "guide"

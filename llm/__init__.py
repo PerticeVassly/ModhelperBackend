@@ -1,11 +1,15 @@
-from .llm import LLMClient, ExtractorLLM, RAGLLM, NonRAGLLM, SummarizeLLM, CategoryLLM, ModRecommendationLLM
+from .llm import LLMClient, ExtractLLM, RAGLLM, NonRAGLLM, SummarizeLLM, CategorizeLLM, ModRecommendLLM, ClassifyLLM, IntentionAnalyzeLLM, HyDELLM, SetBackLLM
 
 __all__ = [
     "LLMClient",
-    "ExtractorLLM",
+    "ExtractLLM",
     "RAGLLM",
     "NonRAGLLM",
     "SummarizeLLM",
-    "CategoryLLM",
-    "ModRecommendationLLM",
+    "CategorizeLLM",
+    "ModRecommendLLM",
+    "ClassifyLLM",
+    "IntentionAnalyzeLLM",
+    "HyDELLM",
+    "SetBackLLM"
 ]
