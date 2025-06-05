@@ -8,8 +8,8 @@ router = APIRouter()
 async def question(request: QuestionRequest,
                    rawRequest : Request , 
                    userInfo: UserInfo = Depends(get_current_user)) -> QuestionResponse:
-    plain = rawRequest.query_params.get("key") == "plain"
-    response = await handle_question(request, userInfo, plainQues=plain)
+    spec = rawRequest.query_params.get("key")
+    response = await handle_question(request, userInfo, spec=spec)
     return response
 
 @router.post("/conversation", response_model = CreateConversationResponse)

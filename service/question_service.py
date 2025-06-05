@@ -46,18 +46,18 @@ async def preProcess(question: str) -> PreProcessResult:
         step_back_answer=results[4].step_back_answer
     )
 
-async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo, plainQues : bool = False) -> QuestionResponse:
-    if plainQues:
+async def handle_question(questionRequest : QuestionRequest, userInfo : UserInfo, spec : str = 'normal') -> QuestionResponse:
+    if spec == 'plain':
         # if the question is plain, we just return the answer
-        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo)
+        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo, spec=spec)
     preProcessResult = await preProcess(question=questionRequest.question)
     logger.info(f"preProcessResult: {preProcessResult}")
     if preProcessResult.is_mc: 
-        return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, preProcessResult=preProcessResult)
+        return await __handle_rag_question(questionRequest=questionRequest, userInfo=userInfo, preProcessResult=preProcessResult, spec=spec)
     else:
-        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo) 
+        return await __handle_non_rag_question(questionRequest=questionRequest, userInfo=userInfo, spec=spec) 
         
-async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo) -> QuestionResponse:
+async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo : UserInfo, spec : str = 'normal') -> QuestionResponse:
     # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
@@ -84,7 +84,7 @@ async def __handle_non_rag_question(questionRequest : QuestionRequest, userInfo 
         reference=[]
     )
 
-async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, preProcessResult : PreProcessResult) -> QuestionResponse:
+async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: UserInfo, preProcessResult : PreProcessResult, spec : str = 'normal') -> QuestionResponse:
      # check if the user do has this conversation
     __check_do_have_conversation(userInfo, questionRequest.conversation_id)
     # fetch history
@@ -112,7 +112,7 @@ async def __handle_rag_question(questionRequest : QuestionRequest, userInfo: Use
         # chat with llm
         context = __retrieve(
             preProcessResult=preProcessResult,
-            text=questionRequest.question)
+            text=questionRequest.question, spec=spec)
         rag = RAGLLM(
             llm_client = LLMClient(api_key=settings.LLM_API_KEY, messages=messages))
         response = await rag.chat(
@@ -208,7 +208,19 @@ def __check_do_have_conversation(userInfo: UserInfo, conversation_id: str) -> bo
         raise HTTPException(status_code=400, detail="Conversation not found or user not matching")
     return True
 
-def __retrieve(preProcessResult : PreProcessResult, text : str) -> list[Reference]:
+def __retrieve(preProcessResult : PreProcessResult, text : str, spec : str = 'normal') -> list[Reference]:
+    if spec == 'raw':
+        raw_searched_entries = vectorDB.search(query=text.strip(), top_k=6)
+        references = []
+        for entry in raw_searched_entries:
+            references.append(Reference(
+                description=entry.metadata.document_name,
+                content = entry.document,
+                url= entry.metadata.url,
+            ))
+        return references
+        
+        
     searched_entries = vectorDB.search(query=text.strip() + preProcessResult.hyde_answer.strip(), top_k=3)
     stepback_searched_entries = vectorDB.search(query=preProcessResult.step_back_question + preProcessResult.step_back_answer, top_k=3)
     all_entries = searched_entries + stepback_searched_entries
