@@ -1,12 +1,21 @@
 from model import *
 from service import *
 from fastapi import APIRouter
+from typing import Optional
 
 router = APIRouter(prefix="/mod")
 
 @router.get("/list", response_model = GetModResponse)
-def get_mods(page: int, page_size: int,userInfo: UserInfo = Depends(get_current_user)) -> GetModResponse:
-    response = handle_get_mods(userInfo, page, page_size)
+def get_mods(page: int, page_size: int,
+             platform: Optional[str] = None,
+             min_stars: int = 0,
+             excluded_tags: Optional[str] = None,
+             userInfo: UserInfo = Depends(get_current_user)) -> GetModResponse:
+    excluded_tags_list = [t.strip() for t in excluded_tags.split(",") if t.strip()] if excluded_tags else None
+    response = handle_get_mods(userInfo, page, page_size,
+                                platform=platform,
+                                min_stars=min_stars,
+                                excluded_tags=excluded_tags_list)
     return response
 
 @router.post("/add", response_model = AddModResponse)

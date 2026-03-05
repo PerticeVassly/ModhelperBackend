@@ -7,13 +7,19 @@ import logging
 
 logger = logging.getLogger("service")
 
-def handle_get_mods(userInfo: UserInfo, page: int = 1, page_size: int = 20) -> GetModResponse:
-    mods = metaInfosRepository.find_mod_by_page(page, page_size)
+def handle_get_mods(userInfo: UserInfo, page: int = 1, page_size: int = 20,
+                    platform: str = None, min_stars: int = 0,
+                    excluded_tags: list[str] = None) -> GetModResponse:
+    mods, total = metaInfosRepository.find_mod_by_page(
+        page, page_size,
+        platform=platform,
+        min_stars=min_stars,
+        excluded_tags=excluded_tags,
+    )
     favorite_mod_ids = set(userInfo.favorite_mods)
     for mod in mods:
         if mod.id in favorite_mod_ids:
             mod.isFavorite = True
-    total = len(mods)
     return GetModResponse(data=mods, total=total)
 
 def handle_add_mod(mod: Mod) -> AddModResponse:

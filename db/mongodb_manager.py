@@ -234,16 +234,27 @@ class MetaInfoCollection:
 
         return [ModBriefIntroduction(**mod) for mod in mods]
 
-    def find_mod_by_page(self, page: int = 1, page_size: int = 20) -> list[ModVO]:
+    def find_mod_by_page(self, page: int = 1, page_size: int = 20,
+                          platform: str = None, min_stars: int = 0,
+                          excluded_tags: list[str] = None) -> tuple[list[ModVO], int]:
+        query = {}
+        if platform:
+            query["support_platforms"] = {"$in": [platform]}
+        if min_stars > 0:
+            query["stars"] = {"$gte": min_stars}
+        if excluded_tags:
+            query["tags"] = {"$nin": excluded_tags}
+
+        total = self.collection.count_documents(query)
         skip = (page - 1) * page_size
-        mods = self.collection.find({}).skip(skip).limit(page_size)
+        mods = self.collection.find(query).skip(skip).limit(page_size)
         result = []
         for mod in mods:
             mod_vo_dict = mod.copy()
             mod_vo_dict["id"] = str(mod_vo_dict.pop("_id"))
             mod_vo_dict["isFavorite"] = False
             result.append(ModVO.model_validate(mod_vo_dict))
-        return result
+        return result, total
 
     def delete_mod_by_id(self, mod_id: str) -> str | None:
         try:
