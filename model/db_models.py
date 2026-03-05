@@ -62,6 +62,7 @@ class Mod(BaseModel):
     related_links : list[str] = []
     detail_page_url : str
     introduction : str
+    stars : int = 0
     guides : list[Guide] = []
     items : list[GeneralItem] = []
     biomes : list[GeneralItem] = []
